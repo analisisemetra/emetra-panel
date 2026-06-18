@@ -557,7 +557,7 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;
   <div class="g2" style="margin-top:8px">
     <div class="pnl"><div class="pt"><div class="d cy"></div>Alcance por plataforma<span class="pt-help">qué red llega a más gente</span></div><div class="chart-box h180"><canvas id="platChart"></canvas></div></div>
     <div class="pnl"><div class="pt"><div class="d al"></div>Dolores ciudadanos — lo que más reclaman<span class="pt-help">más grande = más mencionado</span></div>
-      <div id="doloresCloudPan" style="display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:6px 14px;padding:18px 10px;min-height:140px"></div>
+      <div id="doloresCloudPan" style="display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:14px;padding:18px 10px;min-height:160px"></div>
     </div>
   </div>
 </div>
@@ -571,7 +571,7 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;
   <div class="sh"><div class="st" style="color:var(--red)">🔥 Dolores ciudadanos — lo que más reclaman</div><div class="sl"></div><div class="stag">DE LOS COMENTARIOS</div></div>
   <div class="ibox">◈ Cada palabra es un reclamo detectado en los comentarios. Mientras <b>más grande, más se menciona</b> (más crítico). Rojo = crítico, amarillo = medio, verde = bajo.</div>
   <div class="pnl" style="margin-bottom:14px">
-    <div id="doloresCloud" style="display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:8px 18px;padding:24px 12px;min-height:120px"></div>
+    <div id="doloresCloud" style="display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:16px;padding:24px 12px;min-height:160px"></div>
   </div>
 
   <!-- 2. SENTIMIENTO -->
@@ -628,7 +628,7 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;
   <!-- NUBE DE DOLORES -->
   <div class="sh" style="margin-top:6px"><div class="st" style="color:var(--red)">🔥 Dolores ciudadanos — lo que más reclaman</div><div class="sl"></div></div>
   <div class="pnl" style="margin-bottom:14px">
-    <div id="doloresCloudTerr" style="display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:8px 18px;padding:24px 12px;min-height:100px"></div>
+    <div id="doloresCloudTerr" style="display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:16px;padding:24px 12px;min-height:160px"></div>
   </div>
 
   <div class="sh" style="margin-top:6px"><div class="st" style="color:var(--amber)">Zonas críticas</div><div class="sl"></div><div class="stag" id="zonasCount">0</div></div>
@@ -1324,7 +1324,73 @@ function fmtNum(n){
   return n.toLocaleString();
 }
 
-// ── PANORAMA (datos reales) ──
+// ── BURBUJAS INTERACTIVAS DE DOLORES (reutilizable) ──
+function renderBurbujasDolores(containerId, dolores){
+  const cont=document.getElementById(containerId);if(!cont)return;
+  if(!dolores||dolores.length===0){
+    cont.innerHTML='<div style="font-family:var(--mono);font-size:11px;color:var(--text3);padding:20px;text-align:center;width:100%">Aún no hay dolores detectados. Sube comentarios en 📥 Cargar datos.</div>';
+    return;
+  }
+  const max=Math.max(...dolores.map(x=>x.n),1);
+  cont.innerHTML=dolores.map(x=>{
+    const r=x.n/max;
+    // tamaño de burbuja: 64px a 150px según frecuencia
+    const size=Math.round(64+r*86);
+    const color = r>=0.66?'#ff3060':r>=0.33?'#ffaa00':'#00cc70';
+    const glow = r>=0.66?'rgba(255,48,96,0.35)':r>=0.33?'rgba(255,170,0,0.3)':'rgba(0,204,112,0.25)';
+    const fontSize = Math.max(9, Math.round(10+r*4));
+    const numSize = Math.max(13, Math.round(15+r*12));
+    const esOtros = x.dolor==='Otros';
+    return `<div onclick="${esOtros?'':`verDolorComentarios('${x.dolor.replace(/'/g,"\\'")}')`}" 
+      style="width:${size}px;height:${size}px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:8px;cursor:${esOtros?'default':'pointer'};
+      background:radial-gradient(circle at 35% 30%, ${color}33, ${color}11);border:1.5px solid ${color};box-shadow:0 0 20px ${glow},inset 0 0 16px ${color}15;
+      transition:transform .15s ease, box-shadow .15s ease" 
+      ${esOtros?'':`onmouseover="this.style.transform='scale(1.06)';this.style.boxShadow='0 0 28px ${glow},inset 0 0 16px ${color}25'" onmouseout="this.style.transform='scale(1)';this.style.boxShadow='0 0 20px ${glow},inset 0 0 16px ${color}15'"`}
+      title="${x.n} menciones${esOtros?'':' · clic para ver comentarios'}">
+      <div style="font-family:var(--main);font-size:${numSize}px;font-weight:700;color:${color};line-height:1">${x.n}</div>
+      <div style="font-family:var(--mono);font-size:${fontSize}px;color:var(--text);line-height:1.15;margin-top:3px;max-width:${size-16}px;overflow:hidden">${x.dolor.replace(/</g,'&lt;')}</div>
+    </div>`;
+  }).join('');
+}
+// Modal: muestra los comentarios de una categoría de dolor
+async function verDolorComentarios(cat){
+  let modal=document.getElementById('dolorModal');
+  if(!modal){
+    modal=document.createElement('div');
+    modal.id='dolorModal';
+    modal.style.cssText='position:fixed;inset:0;z-index:9999;background:rgba(2,8,18,0.85);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:20px';
+    modal.onclick=(e)=>{if(e.target===modal)modal.remove();};
+    document.body.appendChild(modal);
+  }
+  modal.innerHTML=`<div style="background:var(--panel,#0a1626);border:1px solid var(--border,#15324d);max-width:680px;width:100%;max-height:82vh;display:flex;flex-direction:column;box-shadow:0 0 40px rgba(0,180,255,0.15)">
+    <div style="display:flex;align-items:center;gap:10px;padding:16px 18px;border-bottom:1px solid var(--border,#15324d)">
+      <div style="font-size:16px;color:var(--text,#dce8f5);font-weight:600;flex:1">🔥 ${cat.replace(/</g,'&lt;')}</div>
+      <button onclick="document.getElementById('dolorModal').remove()" style="background:none;border:1px solid var(--border,#15324d);color:var(--text3,#5a7a99);font-size:16px;width:30px;height:30px;cursor:pointer;border-radius:4px">✕</button>
+    </div>
+    <div id="dolorModalBody" style="padding:14px 18px;overflow-y:auto">
+      <div style="font-family:var(--mono);font-size:11px;color:var(--text3);text-align:center;padding:20px">Cargando comentarios...</div>
+    </div>
+  </div>`;
+  try {
+    const coms=await api('/api/dolor-comentarios?cat='+encodeURIComponent(cat));
+    const body=document.getElementById('dolorModalBody');
+    if(!coms||coms.length===0){ body.innerHTML='<div style="font-family:var(--mono);font-size:11px;color:var(--text3);text-align:center;padding:20px">No se encontraron comentarios para esta categoría.</div>'; return; }
+    const colS={positivo:'#00cc70',negativo:'#ff3060',neutro:'#5a7a99'};
+    body.innerHTML=`<div style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-bottom:12px">${coms.length} comentarios sobre este reclamo</div>`+
+      coms.map(c=>{
+        const fecha=c.fecha?new Date(c.fecha).toLocaleDateString('es-GT',{day:'2-digit',month:'short'}):'';
+        return `<div style="background:rgba(0,0,0,0.3);border:1px solid var(--border,#15324d);border-left:3px solid ${colS[c.sentimiento]||'#5a7a99'};padding:10px 12px;margin-bottom:7px">
+          <div style="font-size:13px;color:var(--text,#dce8f5);line-height:1.4">${(c.texto||'').replace(/</g,'&lt;')}</div>
+          <div style="font-family:var(--mono);font-size:8px;color:var(--text3);margin-top:5px">${(c.autor||'').replace(/</g,'&lt;')} · ${c.red||''} · ${fecha}${c.permalink?` · <a href="${c.permalink}" target="_blank" rel="noopener" style="color:var(--cyan,#00b4ff);text-decoration:none">ver</a>`:''}</div>
+        </div>`;
+      }).join('');
+  } catch(e){
+    const body=document.getElementById('dolorModalBody');
+    if(body)body.innerHTML='<div style="font-family:var(--mono);font-size:11px;color:var(--red);text-align:center;padding:20px">Error: '+e.message+'</div>';
+  }
+}
+
+
 async function cargarPanorama(){
   try {
     const d = await api('/api/panorama');
@@ -1369,21 +1435,9 @@ async function cargarPanorama(){
       dc('platChart');
       charts['platChart']=new Chart(plat.getContext('2d'),{type:'bar',data:{labels:d.porRed.map(p=>p.red),datasets:[{label:'Alcance',data:d.porRed.map(p=>p.alcance),backgroundColor:['#00b4ff','#ff3060','#00cc70','#ffaa00','#7ba8cc']}]},options:{...co,indexAxis:'y',plugins:{...co.plugins,legend:{display:false},tooltip:{callbacks:{label:c=>'Alcance: '+c.parsed.x.toLocaleString()},backgroundColor:'rgba(5,12,24,0.95)',bodyColor:'#c8dff5'}}}});
     }
-    // DOLORES cloud en panorama
+    // DOLORES (burbujas interactivas) en panorama
     const est=await api('/api/estadisticas');
-    const cloud=document.getElementById('doloresCloudPan');
-    if(cloud){
-      const dolores=est.dolores||[];
-      if(dolores.length===0){ cloud.innerHTML='<div style="font-family:var(--mono);font-size:11px;color:var(--text3)">Sube comentarios para ver los dolores.</div>'; }
-      else {
-        const max=Math.max(...dolores.map(x=>x.n),1);
-        cloud.innerHTML=dolores.slice(0,18).map(x=>{
-          const r=x.n/max;const size=Math.round(12+r*26);
-          const color=r>=0.66?'#ff3060':r>=0.33?'#ffaa00':'#00cc70';
-          return `<span style="font-size:${size}px;color:${color};opacity:${0.6+r*0.4};font-weight:${r>=0.5?700:500};line-height:1" title="${x.n}">${(x.dolor||'').replace(/</g,'&lt;')}</span>`;
-        }).join('');
-      }
-    }
+    renderBurbujasDolores('doloresCloudPan', est.dolores);
   } catch(e){ console.error('Panorama:', e.message); }
   cargarFichaPrincipal();
   cargarCredibilidad();
@@ -1539,24 +1593,10 @@ function renderCredEvo(){
 let DENUNCIAS_DATA=[];
 let denFiltro='todas';
 async function cargarTerritorio(){
-  // NUBE DE DOLORES (aquí también)
+  // NUBE DE DOLORES (burbujas interactivas)
   try {
     const est=await api('/api/estadisticas');
-    const cloud=document.getElementById('doloresCloudTerr');
-    if(cloud){
-      const dolores=est.dolores||[];
-      if(dolores.length===0){ cloud.innerHTML='<div style="font-family:var(--mono);font-size:11px;color:var(--text3)">Aún no hay dolores detectados. Sube comentarios en 📥 Cargar datos.</div>'; }
-      else {
-        const max=Math.max(...dolores.map(x=>x.n),1);
-        cloud.innerHTML=dolores.map(x=>{
-          const r=x.n/max;
-          const size=Math.round(13+r*32);
-          const color=r>=0.66?'#ff3060':r>=0.33?'#ffaa00':'#00cc70';
-          const op=0.55+r*0.45;
-          return `<span style="font-size:${size}px;color:${color};opacity:${op};font-weight:${r>=0.5?700:500};line-height:1" title="${x.n} menciones">${(x.dolor||'').replace(/</g,'&lt;')}</span>`;
-        }).join('');
-      }
-    }
+    renderBurbujasDolores('doloresCloudTerr', est.dolores);
   } catch(e){ console.error('Dolores:', e.message); }
   // ZONAS (auto de comentarios)
   try {
@@ -1709,21 +1749,8 @@ function renderCredibilidad(){
 async function cargarEstadisticas(){
   try {
     const d = await api('/api/estadisticas');
-    // NUBE DE DOLORES
-    const cloud=document.getElementById('doloresCloud');
-    if(cloud){
-      if(!d.dolores||d.dolores.length===0){ cloud.innerHTML='<div style="font-family:var(--mono);font-size:11px;color:var(--text3)">Aún no hay dolores detectados. Sube comentarios en 📥 Cargar datos.</div>'; }
-      else {
-        const max=Math.max(...d.dolores.map(x=>x.n),1);
-        cloud.innerHTML=d.dolores.map(x=>{
-          const r=x.n/max;
-          const size=Math.round(13+r*32); // 13px a 45px
-          const color = r>=0.66?'#ff3060':r>=0.33?'#ffaa00':'#00cc70';
-          const op = 0.55+r*0.45;
-          return `<span style="font-size:${size}px;color:${color};opacity:${op};font-weight:${r>=0.5?700:500};line-height:1;font-family:var(--main)" title="${x.n} menciones">${x.dolor}</span>`;
-        }).join('');
-      }
-    }
+    // NUBE DE DOLORES (burbujas interactivas)
+    renderBurbujasDolores('doloresCloud', d.dolores);
     // PLATAFORMAS por alcance
     const plat=document.getElementById('platChart2');
     if(plat&&plat.offsetParent){
