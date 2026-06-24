@@ -1254,8 +1254,13 @@ function doLogout(){
   ['nav','ticker','tabBar'].forEach(id=>document.getElementById(id).classList.add('app-hidden'));
 }
 function applyPerms(){
+  const esAdmin = /admin/i.test(currentUser.role||'');
+  // pestañas que SOLO puede ver el administrador, sin importar permisos guardados
+  const soloAdmin = ['tab-cargar','tab-config'];
   document.querySelectorAll('.tab').forEach(t=>{
     const perm=t.getAttribute('data-perm');
+    // si es una pestaña solo-admin y el usuario no es admin, ocultar siempre
+    if(soloAdmin.includes(t.id) && !esAdmin){ t.style.display='none'; return; }
     if(currentUser.perms.includes(perm)){t.style.display='';t.classList.remove('locked');}
     else{t.style.display='none';}
   });
@@ -2291,19 +2296,33 @@ const ROLE_NAMES={admin:'Administrador',super:'Supervisor',analista:'Analista',l
 function renderUsers(){
   const l=document.getElementById('userList');if(!l)return;
   const roleClass={Administrador:'admin','Supervisor':'super','Analista':'analista','Solo Lectura':'lectura'};
+  const puedeEditar = currentUser && currentUser.perms.includes('config');
   l.innerHTML=USERS.map(u=>{const isSelf=currentUser&&currentUser.user===u.usuario;return `
     <div class="user-row">
       <div class="ur-av">${u.avatar}</div>
       <div class="ur-info">
         <div class="ur-name">${u.nombre}</div>
         <div class="ur-email">@${u.usuario} · ${u.email}</div>
-        <div class="ur-perms">${Object.keys(PERM_LABELS).map(p=>`<span class="perm-chip ${u.permisos.includes(p)?'on':''}">${PERM_LABELS[p]}</span>`).join('')}</div>
+        <div class="ur-perms">${Object.keys(PERM_LABELS).map(p=>`<span class="perm-chip ${u.permisos.includes(p)?'on':''}" ${puedeEditar?`onclick="togglePermUser(${u.id},'${p}')" style="cursor:pointer"`:''} title="${puedeEditar?'clic para activar/desactivar':''}">${PERM_LABELS[p]}</span>`).join('')}</div>
       </div>
       <div class="ur-role ${roleClass[u.rol]}">${u.rol}</div>
       <button class="ent-del" style="border-color:var(--border2);color:var(--cyan)" onclick="editUser(${u.id})">EDITAR</button>
       <button class="ent-del" ${isSelf?'disabled style="opacity:.3;cursor:not-allowed"':''} onclick="deleteUser(${u.id})">${isSelf?'TU SESIÓN':'ELIMINAR'}</button>
     </div>`;}).join('');
   const uc=document.getElementById('cfgUserCount');if(uc)uc.textContent=USERS.length;
+}
+// Activa/desactiva un permiso individual de un usuario y lo guarda
+async function togglePermUser(id, perm){
+  if(!currentUser||!currentUser.perms.includes('config'))return;
+  const u=USERS.find(x=>x.id===id);if(!u)return;
+  const permisos=[...(u.permisos||[])];
+  const idx=permisos.indexOf(perm);
+  if(idx>=0) permisos.splice(idx,1); else permisos.push(perm);
+  try {
+    await api('/api/usuarios/'+id, { method:'PATCH', body: JSON.stringify({ permisos }) });
+    u.permisos=permisos; // actualiza local
+    renderUsers();
+  } catch(e){ alert('Error al guardar permiso: '+e.message); }
 }
 async function editUser(id){
   if(!currentUser||!currentUser.perms.includes('config'))return;
@@ -2315,9 +2334,8 @@ async function editUser(id){
   if(rol===null)return;
   rol=rol.trim();
   if(!rolesValidos.includes(rol)){ alert('Rol no válido. Debe ser exactamente: Administrador, Supervisor, Analista o Solo Lectura.'); return; }
-  // permisos según el rol elegido (preset)
-  const roleKey={'Administrador':'admin','Supervisor':'super','Analista':'analista','Solo Lectura':'lectura'}[rol];
-  const permisos=[...ROLE_PRESETS[roleKey]];
+  // mantiene los permisos actuales del usuario (los ajustas con clic en las etiquetas)
+  const permisos=[...(u.permisos||ROLE_PRESETS[{'Administrador':'admin','Supervisor':'super','Analista':'analista','Solo Lectura':'lectura'}[rol]])];
   const pass=prompt('Nueva contraseña (déjala VACÍA para no cambiarla):', '');
   if(pass===null)return;
   const body={ nombre:nombre.trim()||u.nombre, rol, permisos };
