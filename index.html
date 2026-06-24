@@ -70,7 +70,7 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;
 .logout-btn{font-family:var(--mono);font-size:9px;color:var(--red);padding:4px 8px;border:1px solid rgba(255,48,96,0.3);background:transparent;cursor:pointer;text-transform:uppercase;letter-spacing:1px;}
 
 .t-lbl{font-family:var(--main);font-size:10px;font-weight:700;letter-spacing:2px;color:var(--amber);text-transform:uppercase;white-space:nowrap;padding-right:12px;border-right:1px solid var(--border);flex-shrink:0;}
-.t-scroll{display:flex;gap:40px;animation:ticker 55s linear infinite;white-space:nowrap;}
+.t-scroll{display:flex;gap:40px;animation:ticker 95s linear infinite;white-space:nowrap;}
 @keyframes ticker{from{transform:translateX(0);}to{transform:translateX(-50%);}}
 .ti{font-family:var(--mono);font-size:10px;display:flex;align-items:center;gap:8px;}
 .ts{color:var(--cyan2);font-weight:bold;}.tn{color:var(--red);}.tp{color:var(--green);}.sep{color:var(--text3);}
@@ -2282,7 +2282,7 @@ renderDecs();
 const PERM_LABELS={panorama:'Panorama',estadisticas:'Estadísticas',credibilidad:'Credibilidad',zonas:'Territorio',amenazas:'Actores y Amenazas',proyectos:'Proyectos',decisiones:'Cargar datos',config:'Configuración'};
 const ROLE_PRESETS={
   admin:['panorama','estadisticas','credibilidad','zonas','amenazas','proyectos','decisiones','config'],
-  super:['panorama','estadisticas','credibilidad','zonas','amenazas','proyectos','decisiones'],
+  super:['panorama','estadisticas','credibilidad','zonas','amenazas','proyectos'],
   analista:['panorama','estadisticas','credibilidad','zonas','amenazas','proyectos'],
   lectura:['panorama','credibilidad','zonas','proyectos'],
 };
