@@ -495,19 +495,6 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;
   <div class="sh"><div class="st">Panorama de la conversación</div><div class="sl"></div><div class="stag">18 MAY — 04 JUN 2026</div></div>
   <div class="guide"><div class="guide-ic">👁</div><div class="guide-tx">Esta es la <b>vista general</b>: cuánta gente habla de EMETRA y la PMT en redes, y si lo hace de forma positiva, negativa o neutral. Los números de arriba son el resumen rápido; las gráficas muestran de qué se habla y en qué red social. La línea de tiempo al final muestra cómo ha cambiado el ánimo de la gente mes a mes.</div></div>
 
-  <!-- RESUMEN EJECUTIVO IA -->
-  <div class="pnl" id="resumenEjecutivo" style="border:1px solid rgba(0,180,255,0.3);box-shadow:0 0 24px rgba(0,180,255,0.08);margin-bottom:14px">
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
-      <div style="font-size:16px;color:var(--cyan);font-weight:700">🧠 Resumen ejecutivo</div>
-      <div id="reNivel" style="font-family:var(--mono);font-size:9px;padding:2px 8px;border:1px solid var(--text3);color:var(--text3)"></div>
-      <div id="reFecha" style="font-family:var(--mono);font-size:8px;color:var(--text3);margin-left:auto"></div>
-      <button class="cfg-btn" onclick="generarResumen()" id="btnResumen" style="max-width:160px;padding:6px 12px;font-size:10px">🔄 GENERAR</button>
-    </div>
-    <div id="resumenBody">
-      <div style="font-family:var(--mono);font-size:11px;color:var(--text3);padding:16px;text-align:center">Dale "Generar" para que la IA analice todo y te dé un resumen ejecutivo con recomendaciones.</div>
-    </div>
-  </div>
-
   <!-- FICHA PRINCIPAL: HÉCTOR FLORES -->
   <div id="fichaPrincipal" class="ficha-hf">
     <div class="hf-head">
@@ -650,6 +637,21 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;
   <div class="pnl">
     <div class="pt"><div class="d am"></div>Factores que más afectan el índice<span class="pt-help">del registro más reciente</span></div>
     <div id="credFactores"></div>
+  </div>
+
+  <!-- RESUMEN EJECUTIVO IA -->
+  <div class="sh" style="margin-top:8px"><div class="st" style="color:var(--cyan)">🧠 Resumen ejecutivo — IA</div><div class="sl"></div><div class="stag">PARA DECISIONES</div></div>
+  <div class="ibox">◈ La IA analiza todo el panorama (sentimiento, dolores, denuncias, amenazas, medios) y genera un resumen ejecutivo con lo que preocupa, lo positivo y recomendaciones concretas. Pensado para leer en 1 minuto.</div>
+  <div class="pnl" id="resumenEjecutivo" style="border:1px solid rgba(0,180,255,0.3);box-shadow:0 0 24px rgba(0,180,255,0.08)">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+      <div style="font-size:16px;color:var(--cyan);font-weight:700">🧠 Resumen ejecutivo</div>
+      <div id="reNivel" style="font-family:var(--mono);font-size:9px;padding:2px 8px;border:1px solid var(--text3);color:var(--text3)"></div>
+      <div id="reFecha" style="font-family:var(--mono);font-size:8px;color:var(--text3);margin-left:auto"></div>
+      <button class="cfg-btn" onclick="generarResumen()" id="btnResumen" style="max-width:160px;padding:6px 12px;font-size:10px">🔄 GENERAR</button>
+    </div>
+    <div id="resumenBody">
+      <div style="font-family:var(--mono);font-size:11px;color:var(--text3);padding:16px;text-align:center">Dale "Generar" para que la IA analice todo y te dé un resumen ejecutivo con recomendaciones.</div>
+    </div>
   </div>
 </div>
 
@@ -1478,7 +1480,6 @@ async function cargarPanorama(){
     renderBurbujasDolores('doloresCloudPan', est.dolores);
   } catch(e){ console.error('Panorama:', e.message); }
   cargarFichaPrincipal();
-  cargarResumenEjecutivo();
   cargarCredibilidad();
   cargarProyectosPanorama();
 }
@@ -1611,6 +1612,7 @@ async function cargarCredibilidad(){
     const el=document.getElementById('pnCred'); if(el&&pmt)el.textContent=pmt.puntaje;
   } catch(e){ console.error('Credibilidad:', e.message); }
   cargarCredEvolucion();
+  cargarResumenEjecutivo();
 }
 // Factores que más afectan el índice (del registro más reciente, por entidad)
 function renderCredFactores(){
