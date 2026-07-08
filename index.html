@@ -494,6 +494,19 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;
   <div class="sh"><div class="st">Panorama de la conversación</div><div class="sl"></div><div class="stag">18 MAY — 04 JUN 2026</div></div>
   <div class="guide"><div class="guide-ic">👁</div><div class="guide-tx">Esta es la <b>vista general</b>: cuánta gente habla de EMETRA y la PMT en redes, y si lo hace de forma positiva, negativa o neutral. Los números de arriba son el resumen rápido; las gráficas muestran de qué se habla y en qué red social. La línea de tiempo al final muestra cómo ha cambiado el ánimo de la gente mes a mes.</div></div>
 
+  <!-- RESUMEN EJECUTIVO IA -->
+  <div class="pnl" id="resumenEjecutivo" style="border:1px solid rgba(0,180,255,0.3);box-shadow:0 0 24px rgba(0,180,255,0.08);margin-bottom:14px">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+      <div style="font-size:16px;color:var(--cyan);font-weight:700">🧠 Resumen ejecutivo</div>
+      <div id="reNivel" style="font-family:var(--mono);font-size:9px;padding:2px 8px;border:1px solid var(--text3);color:var(--text3)"></div>
+      <div id="reFecha" style="font-family:var(--mono);font-size:8px;color:var(--text3);margin-left:auto"></div>
+      <button class="cfg-btn" onclick="generarResumen()" id="btnResumen" style="max-width:160px;padding:6px 12px;font-size:10px">🔄 GENERAR</button>
+    </div>
+    <div id="resumenBody">
+      <div style="font-family:var(--mono);font-size:11px;color:var(--text3);padding:16px;text-align:center">Dale "Generar" para que la IA analice todo y te dé un resumen ejecutivo con recomendaciones.</div>
+    </div>
+  </div>
+
   <!-- FICHA PRINCIPAL: HÉCTOR FLORES -->
   <div id="fichaPrincipal" class="ficha-hf">
     <div class="hf-head">
@@ -509,6 +522,7 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;
       <div class="hf-stat"><div class="hf-sv" id="hfMenc">0</div><div class="hf-sl">Menciones</div></div>
       <div class="hf-stat"><div class="hf-sv g" id="hfPos">0%</div><div class="hf-sl">Positivo</div></div>
       <div class="hf-stat"><div class="hf-sv r" id="hfNeg">0%</div><div class="hf-sl">Negativo</div></div>
+      <div class="hf-stat"><div class="hf-sv" style="color:var(--text2)" id="hfNeu">0%</div><div class="hf-sl">Neutro</div></div>
       <div class="hf-stat"><div class="hf-sv c" id="hfMedios">0</div><div class="hf-sl">En medios</div></div>
     </div>
     <div class="hf-medios" id="hfUltimas"></div>
@@ -1463,6 +1477,7 @@ async function cargarPanorama(){
     renderBurbujasDolores('doloresCloudPan', est.dolores);
   } catch(e){ console.error('Panorama:', e.message); }
   cargarFichaPrincipal();
+  cargarResumenEjecutivo();
   cargarCredibilidad();
   cargarProyectosPanorama();
 }
@@ -1513,6 +1528,7 @@ async function cargarFichaPrincipal(){
     set('hfMenc', d.menciones.total);
     set('hfPos', d.menciones.pctPos+'%');
     set('hfNeg', d.menciones.pctNeg+'%');
+    set('hfNeu', (d.menciones.pctNeu||0)+'%');
     set('hfMedios', d.menciones_medios);
     // estado según negatividad
     const estado=document.getElementById('hfEstado');
@@ -1534,8 +1550,56 @@ async function cargarFichaPrincipal(){
   } catch(e){ console.error('Ficha principal:', e.message); }
 }
 
-// ── CREDIBILIDAD (datos reales) ──
-let CRED_DATA=[];
+// ── RESUMEN EJECUTIVO IA ──
+async function cargarResumenEjecutivo(){
+  try {
+    const r=await api('/api/resumen-ejecutivo');
+    if(r) renderResumen(r);
+  } catch(e){ console.error('Resumen:', e.message); }
+}
+async function generarResumen(){
+  const btn=document.getElementById('btnResumen');
+  const body=document.getElementById('resumenBody');
+  if(btn){btn.textContent='🔄 ANALIZANDO...';btn.disabled=true;}
+  if(body)body.innerHTML='<div style="font-family:var(--mono);font-size:11px;color:var(--text2);padding:16px;text-align:center">La IA está analizando todo el panorama... esto tarda unos segundos.</div>';
+  try {
+    const r=await api('/api/resumen-ejecutivo',{method:'POST'});
+    if(r.vacio){ if(body)body.innerHTML='<div style="font-family:var(--mono);font-size:11px;color:var(--text3);padding:16px;text-align:center">'+r.mensaje+'</div>'; }
+    else renderResumen(r);
+  } catch(e){ if(body)body.innerHTML='<div style="font-family:var(--mono);font-size:11px;color:var(--red);padding:16px;text-align:center">⚠ '+e.message+'</div>'; }
+  finally { if(btn){btn.textContent='🔄 GENERAR';btn.disabled=false;} }
+}
+function renderResumen(r){
+  const body=document.getElementById('resumenBody');if(!body)return;
+  // nivel de riesgo
+  const nivel=document.getElementById('reNivel');
+  if(nivel&&r.nivel_riesgo){
+    const col={bajo:'var(--green2)',medio:'var(--amber)',alto:'var(--red)'}[r.nivel_riesgo]||'var(--text3)';
+    nivel.textContent='RIESGO '+r.nivel_riesgo.toUpperCase();
+    nivel.style.color=col; nivel.style.borderColor=col;
+  }
+  const fecha=document.getElementById('reFecha');
+  if(fecha&&r.generado_en){ fecha.textContent='Generado '+new Date(r.generado_en).toLocaleString('es-GT',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}); }
+  const lista=(arr,color)=> (arr||[]).map(x=>`<li style="margin-bottom:5px;color:var(--text2);line-height:1.45">${String(x).replace(/</g,'&lt;')}</li>`).join('');
+  body.innerHTML=`
+    <div style="font-size:15px;color:var(--text);font-weight:600;line-height:1.4;margin-bottom:10px">${(r.titular||'').replace(/</g,'&lt;')}</div>
+    <div style="font-size:13px;color:var(--text2);line-height:1.5;margin-bottom:14px">${(r.panorama||'').replace(/</g,'&lt;')}</div>
+    <div class="g2" style="gap:14px">
+      <div>
+        <div style="font-family:var(--mono);font-size:10px;color:var(--red);letter-spacing:1px;margin-bottom:6px">⚠ LO QUE PREOCUPA</div>
+        <ul style="margin:0;padding-left:16px;font-size:12px">${lista(r.preocupaciones)}</ul>
+      </div>
+      <div>
+        <div style="font-family:var(--mono);font-size:10px;color:var(--green2);letter-spacing:1px;margin-bottom:6px">✓ LO POSITIVO</div>
+        <ul style="margin:0;padding-left:16px;font-size:12px">${lista(r.positivo)}</ul>
+      </div>
+    </div>
+    <div style="margin-top:14px">
+      <div style="font-family:var(--mono);font-size:10px;color:var(--cyan);letter-spacing:1px;margin-bottom:6px">▸ RECOMENDACIONES PARA ESTA SEMANA</div>
+      <ol style="margin:0;padding-left:18px;font-size:12px">${lista(r.recomendaciones)}</ol>
+    </div>`;
+}
+
 async function cargarCredibilidad(){
   try {
     CRED_DATA = await api('/api/credibilidad');
