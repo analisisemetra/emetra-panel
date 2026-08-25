@@ -21,7 +21,16 @@
 }
 html,body{width:100%;height:100%;overflow:hidden;background:var(--ink);color:var(--text);font-family:var(--ui);font-size:13px;}
 body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.03) 2px,rgba(0,0,0,0.03) 4px);}
-.grid-bg{position:fixed;inset:0;pointer-events:none;background-image:linear-gradient(rgba(0,100,180,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(0,100,180,0.04) 1px,transparent 1px);background-size:40px 40px;}
+.grid-bg{position:fixed;inset:0;pointer-events:none;background-image:linear-gradient(rgba(0,100,180,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(0,100,180,0.04) 1px,transparent 1px);background-size:40px 40px;animation:derivaGrid 50s linear infinite;}
+@keyframes derivaGrid{from{background-position:0 0;}to{background-position:80px 80px;}}
+/* Barrido de escaneo: una franja de luz que cruza el panel de vez en cuando, como un radar activo */
+.scan-sweep{position:relative;overflow:hidden;}
+.scan-sweep::after{content:'';position:absolute;top:0;left:-40%;width:35%;height:100%;
+  background:linear-gradient(100deg,transparent,rgba(0,180,255,0.08) 45%,rgba(0,180,255,0.14) 50%,rgba(0,180,255,0.08) 55%,transparent);
+  animation:barridoScan 6s ease-in-out infinite; animation-delay:2s; pointer-events:none;}
+@keyframes barridoScan{0%{left:-40%;}35%{left:120%;}100%{left:120%;}}
+/* Punto "EN VIVO" — igual al del nav, reutilizable en cualquier sección */
+.live-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--green2);margin-right:5px;animation:pulse 1.8s infinite;vertical-align:middle;}
 
 /* ── LOGIN ── */
 .login-overlay{position:fixed;inset:0;z-index:500;background:var(--ink);display:flex;align-items:center;justify-content:center;}
@@ -608,13 +617,13 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;
 
 <!-- ESTADISTICAS -->
 <div class="page-wrap" id="pw-estadisticas">
-  <div class="sh"><div class="st">Estadísticas comparativas — uso ejecutivo</div><div class="sl"></div><div class="stag">ANÁLISIS PROFUNDO</div></div>
+  <div class="sh"><div class="st">Estadísticas comparativas — uso ejecutivo</div><div class="sl"></div><div class="stag" id="estadUltimaAct"><span class="live-dot"></span>ANÁLISIS PROFUNDO</div></div>
   <div class="guide"><div class="guide-ic">📊</div><div class="guide-tx">Análisis profundo de la conversación: <b>qué le duele a la gente</b> (nube de dolores), qué plataformas tienen más alcance, cómo evoluciona el sentimiento y dónde hay picos de crisis. Todo calculado de tus datos reales.</div></div>
 
   <!-- 1. NUBE DE DOLORES -->
   <div class="sh"><div class="st" style="color:var(--red)">🔥 Dolores ciudadanos — lo que más reclaman</div><div class="sl"></div><div class="stag">DE LOS COMENTARIOS</div></div>
   <div class="ibox">◈ Cada palabra es un reclamo detectado en los comentarios. Mientras <b>más grande, más se menciona</b> (más crítico). Rojo = crítico, amarillo = medio, verde = bajo.</div>
-  <div class="pnl" style="margin-bottom:14px">
+  <div class="pnl scan-sweep" style="margin-bottom:14px">
     <div id="doloresCloud" style="display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:16px;padding:24px 12px;min-height:160px"></div>
   </div>
 
@@ -632,7 +641,7 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;
   </div>
 
   <!-- ANÁLISIS EMOCIONAL IA -->
-  <div class="sh" style="margin-top:8px"><div class="st" style="color:var(--cyan)">🧠 Análisis emocional — IA</div><div class="sl"></div><div class="stag">PROFUNDO</div></div>
+  <div class="sh" style="margin-top:8px"><div class="st" style="color:var(--cyan)"><span class="live-dot"></span>🧠 Análisis emocional — IA</div><div class="sl"></div><div class="stag">PROFUNDO</div></div>
   <div class="ibox">◈ Análisis profundo de cada comentario: la emoción dominante, el tema de tránsito, y la intensidad (1-5). Si subiste comentarios antes de esta mejora, dale "Reanalizar todo" para aplicar el análisis nuevo a los viejos.</div>
   <div class="frow" style="margin-bottom:12px">
     <button class="cfg-btn" onclick="reanalizarTodo()" id="btnReanalizar" style="max-width:240px">🔄 REANALIZAR TODO CON IA</button>
@@ -642,7 +651,7 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;
     <div class="pnl"><div class="pt"><div class="d am"></div>Emociones dominantes<span class="pt-help">qué sienten los ciudadanos</span></div><div class="chart-box h220"><canvas id="emocionChart"></canvas></div></div>
     <div class="pnl"><div class="pt"><div class="d cy"></div>Intensidad emocional<span class="pt-help">1 leve · 5 muy intenso</span></div><div class="chart-box h220"><canvas id="intensidadChart"></canvas></div></div>
   </div>
-  <div class="pnl"><div class="pt"><div class="d al"></div>Temas de tránsito por sentimiento<span class="pt-help">cada tema con su balance y su intensidad promedio</span></div>
+  <div class="pnl scan-sweep"><div class="pt"><div class="d al"></div>Temas de tránsito por sentimiento<span class="pt-help">cada tema con su balance y su intensidad promedio</span></div>
     <div id="temasIA" style="display:flex;flex-direction:column;gap:8px;margin-top:8px"></div>
   </div>
   <div class="pnl"><div class="pt"><div class="d al"></div>Reclamos y elogios más intensos<span class="pt-help">los comentarios con más carga emocional</span></div>
@@ -1849,10 +1858,14 @@ function renderCredibilidad(){
       }).join('');
   conts.forEach((cont,ci)=>{
     const prefijo = ['A','B','C'][ci] || ('P'+ci);
-    // ajusta el grid a tantas columnas como entidades (todas en una fila)
+    // ajusta el grid a tantas columnas como quepan bien en la pantalla actual
+    // (antes se fijaba solo por cantidad de entidades, y eso ganaba por encima
+    // de cualquier regla @media, dejando los recuadros diminutos en celular)
+    const anchoVentana = window.innerWidth;
+    const maxCols = anchoVentana < 480 ? 1 : anchoVentana < 720 ? 2 : anchoVentana < 1000 ? 3 : 6;
     cont.style.display='grid';
     cont.style.gap='10px';
-    cont.style.gridTemplateColumns = n>0 ? `repeat(${Math.min(n,6)}, minmax(0,1fr))` : '1fr';
+    cont.style.gridTemplateColumns = n>0 ? `repeat(${Math.min(n,maxCols)}, minmax(0,1fr))` : '1fr';
     cont.innerHTML = html.replace(/_PREFIJO_/g, prefijo);
     CRED_DATA.forEach((c,i)=>{
       const el=document.getElementById('credG'+prefijo+i);if(!el)return;
@@ -1861,6 +1874,12 @@ function renderCredibilidad(){
     });
   });
 }
+// Si giras el celular (portrait/landscape) o cambias de ventana, reacomoda las columnas
+let _reCredTimeout=null;
+window.addEventListener('resize', ()=>{
+  clearTimeout(_reCredTimeout);
+  _reCredTimeout=setTimeout(()=>{ if(CRED_DATA && CRED_DATA.length>0) renderCredibilidad(); }, 250);
+});
 
 // ── ESTADÍSTICAS (datos reales) ──
 // ── DASHBOARD DE SENTIMIENTOS ENRIQUECIDO (emoción, tema, intensidad) ──
@@ -1946,10 +1965,32 @@ async function reanalizarTodo(){
   finally { if(btn){btn.textContent='🔄 REANALIZAR TODO CON IA';btn.disabled=false;} }
 }
 
+// Contador honesto de "hace cuánto se actualizaron los datos" — no decorativo,
+// usa la hora real de la última vez que /api/estadisticas respondió.
+let ESTAD_ULTIMA_CARGA = null;
+let _tickerActInterval = null;
+function iniciarTickerActualizacion(){
+  if(_tickerActInterval) clearInterval(_tickerActInterval); // evita duplicar el intervalo si se recarga la pestaña
+  const el=document.getElementById('estadUltimaAct');
+  function pintar(){
+    if(!el||!ESTAD_ULTIMA_CARGA)return;
+    const seg=Math.floor((Date.now()-ESTAD_ULTIMA_CARGA)/1000);
+    let texto;
+    if(seg<5) texto='ACTUALIZADO AHORA';
+    else if(seg<60) texto='ACTUALIZADO HACE '+seg+'S';
+    else if(seg<3600) texto='ACTUALIZADO HACE '+Math.floor(seg/60)+'M';
+    else texto='ACTUALIZADO HACE '+Math.floor(seg/3600)+'H';
+    el.innerHTML='<span class="live-dot"></span>'+texto;
+  }
+  pintar();
+  _tickerActInterval=setInterval(pintar,1000);
+}
 async function cargarEstadisticas(){
   cargarDashboardSentimientos();
   try {
     const d = await api('/api/estadisticas');
+    ESTAD_ULTIMA_CARGA = Date.now(); // hora real de esta carga — alimenta el contador "hace Xs"
+    iniciarTickerActualizacion();
     // NUBE DE DOLORES (burbujas interactivas)
     renderBurbujasDolores('doloresCloud', d.dolores);
     // PLATAFORMAS por alcance
