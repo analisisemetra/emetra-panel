@@ -831,21 +831,21 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;
   <div class="sh"><div class="st">🔔 Alertas — menciones en medios</div><div class="sl"></div><div class="stag">GOOGLE ALERTS · RSS</div></div>
   <div class="guide"><div class="guide-ic">🔔</div><div class="guide-tx">Aquí aparecen las <b>menciones de tus entidades en noticias y medios</b>, detectadas automáticamente. El sistema revisa cada hora; también puedes actualizar manualmente.</div></div>
 
-  <!-- ALERTAS DE CRISIS — IA vigilando sola -->
-  <div class="sh"><div class="st" style="color:var(--red)">⚠ Alertas de crisis — IA</div><div class="sl"></div><div class="stag" id="crisisTag">VIGILANCIA AUTOMÁTICA</div></div>
-  <div class="ibox" style="background:rgba(255,48,96,0.04);border-color:rgba(255,48,96,0.18)">◈ La IA revisa cada hora si hay señales de crisis: sentimiento negativo en salto, un tema que escala de golpe, posible ataque coordinado, o un pico de menciones. Si algo cruza el umbral, genera una alerta aquí sola — no necesitas estar revisando manualmente.</div>
-  <div class="frow" style="margin-bottom:12px">
-    <button class="cfg-btn" onclick="evaluarCrisisAhora()" id="btnCrisis" style="max-width:220px;border-color:rgba(255,48,96,0.4);color:var(--red)">🔍 EVALUAR AHORA</button>
-    <div id="crisisInfo" style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-left:14px;align-self:center"></div>
-  </div>
-  <div id="crisisList" style="margin-bottom:20px"></div>
-
   <div class="frow" style="margin-bottom:14px">
     <button class="cfg-btn" onclick="refrescarAlertas()" id="btnRefrescar" style="max-width:220px">🔄 ACTUALIZAR AHORA</button>
     <button class="fbtn" onclick="marcarLeidas()" style="margin-left:auto">✓ Marcar todas como leídas</button>
   </div>
   <div id="alertasInfo" style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-bottom:12px;min-height:14px"></div>
   <div id="alertasList"></div>
+
+  <!-- ALERTAS DE CRISIS — IA vigilando sola (sección aparte, debajo de las noticias) -->
+  <div class="sh" style="margin-top:22px"><div class="st" style="color:var(--red)">⚠ Alertas de crisis — IA</div><div class="sl"></div><div class="stag" id="crisisTag">VIGILANCIA AUTOMÁTICA</div></div>
+  <div class="ibox" style="background:rgba(255,48,96,0.04);border-color:rgba(255,48,96,0.18)">◈ La IA revisa cada hora si hay señales de crisis: sentimiento negativo en salto, un tema que escala de golpe, posible ataque coordinado, o un pico de menciones. Si algo cruza el umbral, genera una alerta aquí sola — no necesitas estar revisando manualmente.</div>
+  <div class="frow" style="margin-bottom:12px">
+    <button class="cfg-btn" onclick="evaluarCrisisAhora()" id="btnCrisis" style="max-width:220px;border-color:rgba(255,48,96,0.4);color:var(--red)">🔍 EVALUAR AHORA</button>
+    <div id="crisisInfo" style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-left:14px;align-self:center"></div>
+  </div>
+  <div id="crisisList"></div>
 </div>
 
 <!-- ACTORES -->
