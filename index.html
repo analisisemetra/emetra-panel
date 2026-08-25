@@ -45,7 +45,8 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;
 /* ── CHROME ── */
 .nav{position:fixed;top:0;left:0;right:0;z-index:100;height:var(--nav-h);background:rgba(5,10,20,0.97);border-bottom:1px solid var(--border);backdrop-filter:blur(20px);display:flex;align-items:center;padding:0 20px;gap:14px;}
 .ticker{position:fixed;top:var(--nav-h);left:0;right:0;z-index:99;height:var(--ticker-h);background:rgba(0,0,0,0.55);border-bottom:1px solid var(--border);display:flex;align-items:center;overflow:hidden;padding:0 12px;gap:12px;}
-.tab-bar{position:fixed;top:calc(var(--nav-h) + var(--ticker-h));left:0;right:0;z-index:98;height:var(--tabs-h);background:rgba(3,7,14,0.97);border-bottom:1px solid var(--border);display:flex;align-items:stretch;padding:0 20px;gap:2px;overflow-x:auto;}
+.tab-bar{position:fixed;top:calc(var(--nav-h) + var(--ticker-h));left:0;right:0;z-index:98;height:var(--tabs-h);background:rgba(3,7,14,0.97);border-bottom:1px solid var(--border);display:flex;align-items:stretch;padding:0 20px;gap:2px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
+.tab-bar::-webkit-scrollbar{display:none;}
 .tab-bar::-webkit-scrollbar{height:0;}
 .app-hidden{display:none!important;}
 
@@ -386,6 +387,34 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;
 .hf-mitem{display:flex;align-items:center;gap:8px;background:rgba(0,0,0,0.2);border:1px solid var(--border);padding:7px 10px;font-size:11px;color:var(--text2);text-decoration:none;}
 .hf-mitem:hover{border-color:var(--cyan);}
 .hf-mitem .hf-msrc{font-family:var(--mono);font-size:8px;color:var(--cyan);flex-shrink:0;}
+/* ═══ RESPONSIVE / MÓVIL ═══
+   El resto del panel se diseñó para escritorio. Estas reglas simplifican
+   la barra superior (oculta lo decorativo, conserva lo esencial: logo,
+   usuario, salir) y colapsan las grillas para que quepan en una pantalla
+   angosta sin desbordarse. No cambia las alturas de las barras fijas
+   (nav/ticker/tabs) para no desalinear el contenido debajo. */
+@media(max-width:720px){
+  .nav{padding:0 12px;gap:8px;}
+  .nav-div,.mod-badge,.s-badge,.t-disp{display:none;}
+  .logo-sub{display:none;}
+  .user-info .user-role{display:none;}
+  .user-chip{gap:6px;padding:4px 8px;}
+  .logout-btn{padding:0 10px;font-size:9px;}
+  .tab{padding:0 10px;font-size:10px;gap:4px;}
+  .tab-bar{padding:0 10px;}
+  .ticker{padding:0 10px;gap:8px;}
+  .g2,.g3,.g4{grid-template-columns:1fr 1fr;}
+  .g5,.g6{grid-template-columns:repeat(3,1fr);}
+  .page-wrap{padding:10px 12px 20px;}
+  .chart-box.h200,.chart-box.h220{height:180px;}
+  .chart-box.h180{height:160px;}
+}
+@media(max-width:480px){
+  .g2,.g3,.g4,.g5,.g6{grid-template-columns:1fr;}
+  .logo-name{font-size:15px;}
+  .user-info{display:none;} /* en pantallas muy chicas solo queda el avatar */
+  .chart-box.h160,.chart-box.h180,.chart-box.h200,.chart-box.h220{height:160px;}
+}
 @media(max-width:900px){.hf-stats{grid-template-columns:repeat(3,1fr);}}
 @media(max-width:500px){.hf-stats{grid-template-columns:repeat(2,1fr);}}
 .actor-row{display:flex;align-items:center;gap:12px;background:rgba(0,0,0,0.3);border:1px solid var(--border);padding:11px 13px;margin-bottom:7px;position:relative;}
@@ -1617,6 +1646,7 @@ function renderCredEvo(){
 // ── TERRITORIO (zonas + denuncias automáticas de comentarios) ──
 let DENUNCIAS_DATA=[];
 let denFiltro='todas';
+let denPagina=1, denTotalPaginas=1;
 async function cargarTerritorio(){
   // NUBE DE DOLORES (burbujas interactivas)
   try {
@@ -1641,15 +1671,26 @@ async function cargarTerritorio(){
       }
     }
   } catch(e){ console.error('Zonas:', e.message); }
-  // DENUNCIAS (auto)
+  // DENUNCIAS (auto, primera página)
   try {
-    DENUNCIAS_DATA=await api('/api/denuncias');
+    const r=await api('/api/denuncias?pagina=1&limite=100');
+    DENUNCIAS_DATA=r.datos; denPagina=r.pagina; denTotalPaginas=r.paginas;
     // construye filtros por zona dinámicos
     const zonasUnicas=[...new Set(DENUNCIAS_DATA.map(d=>d.zona).filter(z=>z&&z!=='Sin zona'&&z!=='—'))].slice(0,8);
     const cont=document.getElementById('denZonaFiltros');
     if(cont){ cont.innerHTML=zonasUnicas.map(z=>`<button class="fbtn" onclick="filtrarDenuncias('${z.replace(/'/g,'')}',this)">${z}</button>`).join(''); }
     renderDenuncias();
   } catch(e){ console.error('Denuncias:', e.message); }
+}
+async function cargarMasDenuncias(){
+  const btn=document.getElementById('btnMasDenuncias');
+  if(btn){ btn.textContent='Cargando...'; btn.disabled=true; }
+  try {
+    const r=await api('/api/denuncias?pagina='+(denPagina+1)+'&limite=100');
+    DENUNCIAS_DATA=DENUNCIAS_DATA.concat(r.datos);
+    denPagina=r.pagina; denTotalPaginas=r.paginas;
+    renderDenuncias();
+  } catch(e){ console.error('Cargar más denuncias:', e.message); if(btn){ btn.textContent='⚠ Error, reintenta'; btn.disabled=false; } }
 }
 function filtrarDenuncias(f,btn){
   denFiltro=f;
@@ -1662,7 +1703,7 @@ function renderDenuncias(){
   const dc=document.getElementById('denCount'); if(dc)dc.textContent=DENUNCIAS_DATA.length;
   const lista = denFiltro==='todas' ? DENUNCIAS_DATA : DENUNCIAS_DATA.filter(d=>d.zona===denFiltro);
   if(lista.length===0){ l.innerHTML='<div style="text-align:center;padding:20px;font-family:var(--mono);font-size:11px;color:var(--text3)">No hay denuncias en este filtro. Sube comentarios negativos con ubicación.</div>'; return; }
-  l.innerHTML=lista.map(d=>{
+  const filas=lista.map(d=>{
     const fecha=d.fecha?new Date(d.fecha).toLocaleDateString('es-GT',{day:'2-digit',month:'short',year:'numeric'}):'';
     return `<div style="background:rgba(0,0,0,0.3);border:1px solid var(--border);border-left:3px solid var(--red);padding:12px;margin-bottom:8px">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;flex-wrap:wrap">
@@ -1676,6 +1717,11 @@ function renderDenuncias(){
       <div style="font-family:var(--mono);font-size:8px;color:var(--text3);margin-top:5px">${d.autor||''} · ${d.red||''} · ${fecha}</div>
     </div>`;
   }).join('');
+  // "Cargar más" solo tiene sentido viendo todas (paginado por fecha global, no por zona)
+  const masBtn = (denFiltro==='todas' && denPagina<denTotalPaginas)
+    ? `<div style="text-align:center;margin-top:6px"><button class="fbtn" id="btnMasDenuncias" onclick="cargarMasDenuncias()">↓ Cargar más (página ${denPagina} de ${denTotalPaginas})</button></div>`
+    : '';
+  l.innerHTML = filas + masBtn;
 }
 // Descargar denuncias en PDF para los oficiales
 function descargarDenunciasPDF(){
@@ -2615,25 +2661,45 @@ const TIPO_NOMBRE={medio:'Medio',politico:'Político',civil:'Civil',ficticio:'Fi
 const POSTURA_LABEL={favor:'A FAVOR',contra:'EN CONTRA',neutral:'NEUTRAL'};
 
 // ── ALERTAS (menciones en medios) ──
+let ALERTAS_DATA=[];
+let alPagina=1, alTotalPaginas=1;
 async function cargarAlertas(){
-  const l=document.getElementById('alertasList');if(!l)return;
   try {
-    const filas=await api('/api/alertas');
-    if(filas.length===0){ l.innerHTML='<div style="text-align:center;padding:24px;font-family:var(--mono);font-size:11px;color:var(--text3)">No hay menciones todavía. Agrega tus fuentes RSS en Configuración y dale "Actualizar ahora".</div>'; return; }
-    l.innerHTML=filas.map(m=>{
-      const fecha=m.publicado?new Date(m.publicado).toLocaleString('es-GT',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}):'';
-      const nuevo=!m.leida?'<span style="background:rgba(255,48,96,0.2);color:var(--red);font-family:var(--mono);font-size:8px;padding:2px 6px;margin-right:6px">NUEVO</span>':'';
-      return `<div style="background:rgba(0,0,0,0.3);border:1px solid var(--border);border-left:3px solid ${m.leida?'var(--border2)':'var(--red)'};padding:13px;margin-bottom:8px">
-        <div style="display:flex;align-items:center;gap:6px;margin-bottom:5px">
-          ${nuevo}<span style="font-family:var(--mono);font-size:9px;color:var(--cyan)">${m.fuente_nombre||''}</span>
-          <span style="font-family:var(--mono);font-size:9px;color:var(--text3);margin-left:auto">${fecha}</span>
-        </div>
-        <div style="font-size:14px;color:var(--text);font-weight:600;line-height:1.4;margin-bottom:6px">${(m.titulo||'').replace(/</g,'&lt;')}</div>
-        <div style="font-size:11px;color:var(--text3);line-height:1.5;margin-bottom:8px">${(m.resumen||'').replace(/</g,'&lt;').slice(0,200)}${(m.resumen||'').length>200?'...':''}</div>
-        ${m.enlace?`<a href="${m.enlace}" target="_blank" rel="noopener" style="font-family:var(--mono);font-size:10px;color:var(--cyan);text-decoration:none">▸ Ver nota completa</a>`:''}
-      </div>`;
-    }).join('');
+    const r=await api('/api/alertas?pagina=1&limite=50');
+    ALERTAS_DATA=r.datos; alPagina=r.pagina; alTotalPaginas=r.paginas;
+    renderAlertas();
   } catch(e){ console.error('Alertas:', e.message); }
+}
+async function cargarMasAlertas(){
+  const btn=document.getElementById('btnMasAlertas');
+  if(btn){ btn.textContent='Cargando...'; btn.disabled=true; }
+  try {
+    const r=await api('/api/alertas?pagina='+(alPagina+1)+'&limite=50');
+    ALERTAS_DATA=ALERTAS_DATA.concat(r.datos);
+    alPagina=r.pagina; alTotalPaginas=r.paginas;
+    renderAlertas();
+  } catch(e){ console.error('Cargar más alertas:', e.message); if(btn){ btn.textContent='⚠ Error, reintenta'; btn.disabled=false; } }
+}
+function renderAlertas(){
+  const l=document.getElementById('alertasList');if(!l)return;
+  if(ALERTAS_DATA.length===0){ l.innerHTML='<div style="text-align:center;padding:24px;font-family:var(--mono);font-size:11px;color:var(--text3)">No hay menciones todavía. Agrega tus fuentes RSS en Configuración y dale "Actualizar ahora".</div>'; return; }
+  const filas=ALERTAS_DATA.map(m=>{
+    const fecha=m.publicado?new Date(m.publicado).toLocaleString('es-GT',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}):'';
+    const nuevo=!m.leida?'<span style="background:rgba(255,48,96,0.2);color:var(--red);font-family:var(--mono);font-size:8px;padding:2px 6px;margin-right:6px">NUEVO</span>':'';
+    return `<div style="background:rgba(0,0,0,0.3);border:1px solid var(--border);border-left:3px solid ${m.leida?'var(--border2)':'var(--red)'};padding:13px;margin-bottom:8px">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:5px">
+        ${nuevo}<span style="font-family:var(--mono);font-size:9px;color:var(--cyan)">${m.fuente_nombre||''}</span>
+        <span style="font-family:var(--mono);font-size:9px;color:var(--text3);margin-left:auto">${fecha}</span>
+      </div>
+      <div style="font-size:14px;color:var(--text);font-weight:600;line-height:1.4;margin-bottom:6px">${(m.titulo||'').replace(/</g,'&lt;')}</div>
+      <div style="font-size:11px;color:var(--text3);line-height:1.5;margin-bottom:8px">${(m.resumen||'').replace(/</g,'&lt;').slice(0,200)}${(m.resumen||'').length>200?'...':''}</div>
+      ${m.enlace?`<a href="${m.enlace}" target="_blank" rel="noopener" style="font-family:var(--mono);font-size:10px;color:var(--cyan);text-decoration:none">▸ Ver nota completa</a>`:''}
+    </div>`;
+  }).join('');
+  const masBtn = alPagina<alTotalPaginas
+    ? `<div style="text-align:center;margin-top:6px"><button class="fbtn" id="btnMasAlertas" onclick="cargarMasAlertas()">↓ Cargar más (página ${alPagina} de ${alTotalPaginas})</button></div>`
+    : '';
+  l.innerHTML = filas + masBtn;
 }
 async function refrescarAlertas(){
   const btn=document.getElementById('btnRefrescar');
