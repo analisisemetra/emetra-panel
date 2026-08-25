@@ -33,6 +33,8 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;
 .login-box-mark::before{content:'';position:absolute;width:26px;height:26px;border:1px solid rgba(0,180,255,0.3);transform:rotate(45deg);}
 .login-dot{width:11px;height:11px;background:var(--cyan);animation:pulse 2s infinite;}
 @keyframes pulse{0%,100%{opacity:1;box-shadow:0 0 8px var(--cyan);}50%{opacity:.5;box-shadow:0 0 18px var(--cyan);}}
+/* Entrada suave, UNA sola vez (no en bucle) — para que las burbujas y tarjetas no aparezcan de golpe */
+@keyframes fadeInUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
 .login-title{font-family:var(--main);font-size:22px;font-weight:700;letter-spacing:4px;color:var(--cyan);text-transform:uppercase;}
 .login-subt{font-family:var(--mono);font-size:8px;color:var(--text3);letter-spacing:2px;}
 .login-label{font-family:var(--main);font-size:10px;font-weight:600;letter-spacing:2px;color:var(--text3);text-transform:uppercase;margin-bottom:6px;display:block;}
@@ -1283,7 +1285,7 @@ function goTab(n){
 }
 
 // ── CHARTS ──
-const co={responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{backgroundColor:'rgba(5,12,24,0.95)',borderColor:'rgba(255,170,0,0.3)',borderWidth:1,titleColor:'#ffaa00',bodyColor:'#c8dff5',titleFont:{family:'Share Tech Mono',size:10},bodyFont:{family:'Share Tech Mono',size:11}}},scales:{x:{grid:{color:'rgba(0,100,180,0.08)'},ticks:{color:'#3d6080',font:{size:9,family:'Share Tech Mono'}}},y:{grid:{color:'rgba(0,100,180,0.08)'},ticks:{color:'#3d6080',font:{size:9,family:'Share Tech Mono'}}}}};
+const co={responsive:true,maintainAspectRatio:false,animation:{duration:750,easing:'easeOutQuart'},plugins:{legend:{display:false},tooltip:{backgroundColor:'rgba(5,12,24,0.95)',borderColor:'rgba(255,170,0,0.3)',borderWidth:1,titleColor:'#ffaa00',bodyColor:'#c8dff5',titleFont:{family:'Share Tech Mono',size:10},bodyFont:{family:'Share Tech Mono',size:11}}},scales:{x:{grid:{color:'rgba(0,100,180,0.08)'},ticks:{color:'#3d6080',font:{size:9,family:'Share Tech Mono'}}},y:{grid:{color:'rgba(0,100,180,0.08)'},ticks:{color:'#3d6080',font:{size:9,family:'Share Tech Mono'}}}}};
 const charts={};
 function dc(id){if(charts[id]){charts[id].destroy();delete charts[id];}}
 function mk(id,cfg){const el=document.getElementById(id);if(el&&el.offsetParent){dc(id);charts[id]=new Chart(el.getContext('2d'),cfg);}}
@@ -1336,7 +1338,7 @@ function renderBurbujasDolores(containerId, dolores){
     return;
   }
   const max=Math.max(...dolores.map(x=>x.n),1);
-  cont.innerHTML=dolores.map(x=>{
+  cont.innerHTML=dolores.map((x,i)=>{
     const r=x.n/max;
     // tamaño de burbuja: 64px a 150px según frecuencia
     const size=Math.round(64+r*86);
@@ -1345,16 +1347,39 @@ function renderBurbujasDolores(containerId, dolores){
     const fontSize = Math.max(9, Math.round(10+r*4));
     const numSize = Math.max(13, Math.round(15+r*12));
     const esOtros = x.dolor==='Otros';
+    const numId = containerId+'-num-'+i;
+    const delay = Math.min(i*0.035, 0.5);
     return `<div onclick="${esOtros?'':`verDolorComentarios('${x.dolor.replace(/'/g,"\\'")}')`}" 
       style="width:${size}px;height:${size}px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:8px;cursor:${esOtros?'default':'pointer'};
       background:radial-gradient(circle at 35% 30%, ${color}33, ${color}11);border:1.5px solid ${color};box-shadow:0 0 20px ${glow},inset 0 0 16px ${color}15;
+      opacity:0;animation:fadeInUp .5s ease ${delay}s forwards;
       transition:transform .15s ease, box-shadow .15s ease" 
       ${esOtros?'':`onmouseover="this.style.transform='scale(1.06)';this.style.boxShadow='0 0 28px ${glow},inset 0 0 16px ${color}25'" onmouseout="this.style.transform='scale(1)';this.style.boxShadow='0 0 20px ${glow},inset 0 0 16px ${color}15'"`}
       title="${x.n} menciones${esOtros?'':' · clic para ver comentarios'}">
-      <div style="font-family:var(--main);font-size:${numSize}px;font-weight:700;color:${color};line-height:1">${x.n}</div>
+      <div id="${numId}" style="font-family:var(--main);font-size:${numSize}px;font-weight:700;color:${color};line-height:1">0</div>
       <div style="font-family:var(--mono);font-size:${fontSize}px;color:var(--text);line-height:1.15;margin-top:3px;max-width:${size-16}px;overflow:hidden">${x.dolor.replace(/</g,'&lt;')}</div>
     </div>`;
   }).join('');
+  // cuenta los números de 0 al valor real — una sola vez, sin repetir
+  dolores.forEach((x,i)=>{
+    const el=document.getElementById(containerId+'-num-'+i);
+    if(el) contarNumero(el, x.n, 550, Math.min(i*35,500));
+  });
+}
+// Anima un número de 0 a su valor final (una sola vez, no en bucle) — da sensación de "cargando datos reales"
+function contarNumero(el, valorFinal, duracionMs, delayMs){
+  delayMs=delayMs||0;
+  setTimeout(()=>{
+    const inicio=performance.now();
+    function paso(t){
+      const p=Math.min((t-inicio)/duracionMs,1);
+      const facil=1-Math.pow(1-p,3); // ease-out cúbico
+      el.textContent=Math.round(valorFinal*facil).toLocaleString();
+      if(p<1) requestAnimationFrame(paso);
+      else el.textContent=valorFinal.toLocaleString();
+    }
+    requestAnimationFrame(paso);
+  }, delayMs);
 }
 // Modal: muestra los comentarios de una categoría de dolor
 async function verDolorComentarios(cat){
@@ -1846,19 +1871,28 @@ async function cargarDashboardSentimientos(){
     if(tIA){
       if(!d.porTema||d.porTema.length===0){ tIA.innerHTML='<div style="font-family:var(--mono);font-size:11px;color:var(--text3);padding:14px;text-align:center">Sin temas analizados. Dale "Reanalizar todo" o sube comentarios.</div>'; }
       else {
-        tIA.innerHTML=d.porTema.map(t=>{
+        tIA.innerHTML=d.porTema.map((t,i)=>{
           const tot=t.n||1; const pos=Math.round(t.positivos/tot*100),neg=Math.round(t.negativos/tot*100);
           const ic=t.intensidad_prom>=4?'🔴':t.intensidad_prom>=3?'🟡':'🟢';
-          return `<div style="background:rgba(0,0,0,0.25);border:1px solid var(--border);padding:9px 12px">
+          const delay=Math.min(i*0.05,0.4);
+          return `<div style="background:rgba(0,0,0,0.25);border:1px solid var(--border);padding:9px 12px;opacity:0;animation:fadeInUp .45s ease ${delay}s forwards">
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px"><div style="flex:1;font-size:13px;color:var(--text);text-transform:capitalize">${(t.tema||'').replace(/</g,'&lt;')}</div>
             <span style="font-family:var(--mono);font-size:9px;color:var(--text3)">${t.n} coment.</span>
             <span style="font-family:var(--mono);font-size:9px;color:var(--text2)" title="intensidad promedio">${ic} ${t.intensidad_prom||0}/5</span></div>
             <div style="height:8px;background:rgba(0,0,0,0.4);border-radius:4px;overflow:hidden;display:flex">
-              <div style="width:${pos}%;background:#00cc70"></div><div style="width:${neg}%;background:#ff3060"></div><div style="flex:1;background:#3d6080"></div>
+              <div id="tIA-pos-${i}" data-w="${pos}" style="width:0%;background:#00cc70;transition:width .8s cubic-bezier(.16,1,.3,1) ${delay+0.1}s"></div><div id="tIA-neg-${i}" data-w="${neg}" style="width:0%;background:#ff3060;transition:width .8s cubic-bezier(.16,1,.3,1) ${delay+0.1}s"></div><div style="flex:1;background:#3d6080"></div>
             </div>
             <div style="display:flex;gap:10px;margin-top:4px;font-family:var(--mono);font-size:8px;color:var(--text3)"><span style="color:var(--green2)">●${pos}%</span><span style="color:var(--red)">●${neg}%</span></div>
           </div>`;
         }).join('');
+        // dispara el crecimiento de las barras (doble rAF para asegurar que el navegador pinte el 0% primero)
+        requestAnimationFrame(()=>requestAnimationFrame(()=>{
+          d.porTema.forEach((t,i)=>{
+            const bp=document.getElementById('tIA-pos-'+i), bn=document.getElementById('tIA-neg-'+i);
+            if(bp) bp.style.width=bp.dataset.w+'%';
+            if(bn) bn.style.width=bn.dataset.w+'%';
+          });
+        }));
       }
     }
     // Más intensos
@@ -1867,7 +1901,7 @@ async function cargarDashboardSentimientos(){
       if(!d.masIntensos||d.masIntensos.length===0){ mi.innerHTML='<div style="font-family:var(--mono);font-size:11px;color:var(--text3);padding:14px;text-align:center">Sin comentarios intensos analizados todavía.</div>'; }
       else {
         const colS={positivo:'#00cc70',negativo:'#ff3060',neutro:'#5a7a99'};
-        mi.innerHTML=d.masIntensos.map(c=>`<div style="background:rgba(0,0,0,0.3);border:1px solid var(--border);border-left:3px solid ${colS[c.sentimiento]||'#5a7a99'};padding:10px 12px;margin-bottom:7px">
+        mi.innerHTML=d.masIntensos.map((c,i)=>{const delay=Math.min(i*0.04,0.4);return `<div style="background:rgba(0,0,0,0.3);border:1px solid var(--border);border-left:3px solid ${colS[c.sentimiento]||'#5a7a99'};padding:10px 12px;margin-bottom:7px;opacity:0;animation:fadeInUp .45s ease ${delay}s forwards">
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;flex-wrap:wrap">
             <span style="font-family:var(--mono);font-size:8px;color:${EMO_COLOR[c.emocion]||'#5a7a99'};border:1px solid ${EMO_COLOR[c.emocion]||'#5a7a99'};padding:1px 6px">${EMO_LABEL[c.emocion]||c.emocion}</span>
             <span style="font-family:var(--mono);font-size:8px;color:var(--amber);text-transform:capitalize">${(c.tema||'').replace(/</g,'&lt;')}</span>
@@ -1876,7 +1910,7 @@ async function cargarDashboardSentimientos(){
           <div style="font-size:13px;color:var(--text);font-weight:600;line-height:1.3">${(c.resumen||'').replace(/</g,'&lt;')}</div>
           <div style="font-size:11px;color:var(--text2);line-height:1.4;margin-top:3px">${(c.texto||'').slice(0,180).replace(/</g,'&lt;')}${(c.texto||'').length>180?'...':''}</div>
           <div style="font-family:var(--mono);font-size:8px;color:var(--text3);margin-top:4px">${(c.autor||'').replace(/</g,'&lt;')} · ${c.red||''}${c.permalink?` · <a href="${c.permalink}" target="_blank" rel="noopener" style="color:var(--cyan);text-decoration:none">ver</a>`:''}</div>
-        </div>`).join('');
+        </div>`;}).join('');
       }
     }
   } catch(e){ console.error('Dashboard sentimientos:', e.message); }
