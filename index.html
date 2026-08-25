@@ -443,6 +443,17 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;
 .guide-tx{font-family:var(--ui);font-size:12px;color:var(--text2);line-height:1.55;}
 .guide-tx b{color:var(--text);font-weight:600;}
 
+/* Respeta "Reducir movimiento" del sistema (iOS/Android) — quita las animaciones
+   nuevas para quien lo tenga activado por batería, mareo, o preferencia personal.
+   Los datos se muestran igual, solo sin el efecto de entrada. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
 @media print{
   .nav,.ticker,.tab-bar{display:none!important;}
   .page-wrap{position:static!important;top:0!important;overflow:visible!important;display:block!important;}
@@ -1368,6 +1379,11 @@ function renderBurbujasDolores(containerId, dolores){
 }
 // Anima un número de 0 a su valor final (una sola vez, no en bucle) — da sensación de "cargando datos reales"
 function contarNumero(el, valorFinal, duracionMs, delayMs){
+  // Si el sistema tiene "reducir movimiento" activado, muestra el número directo, sin animar
+  if(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches){
+    el.textContent=valorFinal.toLocaleString();
+    return;
+  }
   delayMs=delayMs||0;
   setTimeout(()=>{
     const inicio=performance.now();
