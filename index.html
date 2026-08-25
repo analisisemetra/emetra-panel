@@ -780,6 +780,15 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;
   <div class="sh"><div class="st">🔔 Alertas — menciones en medios</div><div class="sl"></div><div class="stag">GOOGLE ALERTS · RSS</div></div>
   <div class="guide"><div class="guide-ic">🔔</div><div class="guide-tx">Aquí aparecen las <b>menciones de tus entidades en noticias y medios</b>, detectadas automáticamente. El sistema revisa cada hora; también puedes actualizar manualmente.</div></div>
 
+  <!-- ALERTAS DE CRISIS — IA vigilando sola -->
+  <div class="sh"><div class="st" style="color:var(--red)">⚠ Alertas de crisis — IA</div><div class="sl"></div><div class="stag" id="crisisTag">VIGILANCIA AUTOMÁTICA</div></div>
+  <div class="ibox" style="background:rgba(255,48,96,0.04);border-color:rgba(255,48,96,0.18)">◈ La IA revisa cada hora si hay señales de crisis: sentimiento negativo en salto, un tema que escala de golpe, posible ataque coordinado, o un pico de menciones. Si algo cruza el umbral, genera una alerta aquí sola — no necesitas estar revisando manualmente.</div>
+  <div class="frow" style="margin-bottom:12px">
+    <button class="cfg-btn" onclick="evaluarCrisisAhora()" id="btnCrisis" style="max-width:220px;border-color:rgba(255,48,96,0.4);color:var(--red)">🔍 EVALUAR AHORA</button>
+    <div id="crisisInfo" style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-left:14px;align-self:center"></div>
+  </div>
+  <div id="crisisList" style="margin-bottom:20px"></div>
+
   <div class="frow" style="margin-bottom:14px">
     <button class="cfg-btn" onclick="refrescarAlertas()" id="btnRefrescar" style="max-width:220px">🔄 ACTUALIZAR AHORA</button>
     <button class="fbtn" onclick="marcarLeidas()" style="margin-left:auto">✓ Marcar todas como leídas</button>
@@ -815,6 +824,11 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;
     <div class="pnl"><div class="pt"><div class="d cy"></div>Reparto por postura</div><div class="chart-box h180"><canvas id="actDona"></canvas></div></div>
     <div class="pnl"><div class="pt"><div class="d am"></div>Postura por tipo de actor</div><div class="chart-box h180"><canvas id="actBarras"></canvas></div></div>
   </div>
+
+  <!-- AMBIENTE EN MEDIOS — AUTOMÁTICO DE RSS -->
+  <div class="sh" style="margin-top:8px"><div class="st" style="color:var(--green2)">🌐 Ambiente en medios</div><div class="sl"></div><div class="stag">AUTOMÁTICO · DE TUS ALERTAS RSS</div></div>
+  <div class="ibox">◈ La IA lee cada noticia que llega por tus alertas RSS y clasifica si te trata bien, mal, o de forma neutral. Aquí ves qué medios te mencionan más y quiénes te dan las notas más buenas y más malas — sin que captures nada a mano.</div>
+  <div id="ambienteMediosList" style="margin-bottom:18px"></div>
 
   <!-- NOTICIAS EN MEDIOS (alimentan el mapa) -->
   <div class="sh" style="margin-top:8px"><div class="st" style="color:var(--cyan)">📰 Noticias registradas</div><div class="sl"></div><div class="stag">AGREGA EN CONFIG</div></div>
@@ -1230,8 +1244,8 @@ function goTab(n){
   if(n==='estadisticas')setTimeout(cargarEstadisticas,120);
   if(n==='amenazas')setTimeout(cargarAmenazas,90);
   if(n==='zonas')setTimeout(cargarTerritorio,90);
-  if(n==='actores')setTimeout(()=>{cargarActores();},90);
-  if(n==='alertas')setTimeout(()=>{cargarAlertas();marcarLeidas();},90);
+  if(n==='actores')setTimeout(()=>{cargarActores();cargarAmbienteMedios();},90);
+  if(n==='alertas')setTimeout(()=>{cargarAlertas();marcarLeidas();cargarCrisis();},90);
   if(n==='config')setTimeout(()=>{cargarFuentes();cargarNoticias();llenarSelectEntidades();},90);
   if(n==='cargar')setTimeout(()=>{
     cargarDudosos();cargarHistorico();llenarSelectEntidades();
@@ -2628,9 +2642,12 @@ async function refrescarAlertas(){
   info.style.color='var(--text2)'; info.textContent='Revisando fuentes RSS...';
   try {
     const r=await api('/api/alertas/refrescar',{ method:'POST' });
+    let msg=r.nuevas>0?('✓ '+r.nuevas+' menciones nuevas de '+r.fuentes+' fuentes'):('Sin menciones nuevas. ('+r.fuentes+' fuentes revisadas)');
+    if(r.crisis) msg+=' · ⚠ nueva alerta de crisis generada';
     info.style.color=r.nuevas>0?'var(--green2)':'var(--text3)';
-    info.textContent=r.nuevas>0?('✓ '+r.nuevas+' menciones nuevas de '+r.fuentes+' fuentes'):('Sin menciones nuevas. ('+r.fuentes+' fuentes revisadas)');
+    info.textContent=msg;
     await cargarAlertas();
+    await cargarCrisis();
     actualizarBadgeAlertas();
     actualizarTicker();
   } catch(e){ info.style.color='var(--red)'; info.textContent='⚠ '+e.message; }
@@ -2643,9 +2660,80 @@ async function marcarLeidas(){
 async function actualizarBadgeAlertas(){
   try {
     const r=await api('/api/alertas/nuevas');
+    let extra=0;
+    try { extra=(await api('/api/alertas-crisis/nuevas')).nuevas||0; } catch(e){}
+    const total=(r.nuevas||0)+extra;
     const b=document.getElementById('alertasBadge');
-    if(b){ if(r.nuevas>0){ b.textContent=r.nuevas; b.style.display=''; } else { b.style.display='none'; } }
+    if(b){ if(total>0){ b.textContent=total; b.style.display=''; } else { b.style.display='none'; } }
   } catch(e){}
+}
+// ── ALERTAS DE CRISIS (IA vigilando sola) ──
+const CRISIS_SEV={media:{col:'var(--amber)',lbl:'MEDIA'},alta:{col:'var(--red)',lbl:'ALTA'},critica:{col:'#ff0044',lbl:'CRÍTICA'}};
+async function cargarCrisis(){
+  const l=document.getElementById('crisisList');if(!l)return;
+  try {
+    const filas=await api('/api/alertas-crisis');
+    if(!filas||filas.length===0){ l.innerHTML='<div style="text-align:center;padding:18px;font-family:var(--mono);font-size:11px;color:var(--text3)">Sin alertas de crisis activas. La IA revisa cada hora automáticamente.</div>'; return; }
+    l.innerHTML=filas.map(a=>{
+      const sev=CRISIS_SEV[a.severidad]||CRISIS_SEV.media;
+      const fecha=a.creado_en?new Date(a.creado_en).toLocaleString('es-GT',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}):'';
+      return `<div style="background:rgba(0,0,0,0.3);border:1px solid var(--border);border-left:3px solid ${sev.col};padding:13px;margin-bottom:8px;${a.leida?'opacity:.55':''}">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap">
+          <span style="font-family:var(--mono);font-size:8px;color:${sev.col};border:1px solid ${sev.col};padding:2px 7px">${sev.lbl}</span>
+          <span style="font-family:var(--mono);font-size:9px;color:var(--text3)">${fecha}</span>
+          ${!a.leida?`<button class="fbtn" style="margin-left:auto;padding:3px 10px" onclick="marcarCrisisLeida(${a.id})">✓ marcar leída</button>`:''}
+        </div>
+        <div style="font-size:14px;color:var(--text);font-weight:700;line-height:1.35;margin-bottom:6px">${(a.titulo||'').replace(/</g,'&lt;')}</div>
+        <div style="font-size:12px;color:var(--text2);line-height:1.5;margin-bottom:7px">${(a.explicacion||'').replace(/</g,'&lt;')}</div>
+        <div style="font-size:11px;color:var(--cyan);line-height:1.5"><b>▸ Recomendación:</b> ${(a.recomendacion||'').replace(/</g,'&lt;')}</div>
+      </div>`;
+    }).join('');
+  } catch(e){ console.error('Crisis:', e.message); }
+}
+async function evaluarCrisisAhora(){
+  const btn=document.getElementById('btnCrisis');
+  const info=document.getElementById('crisisInfo');
+  btn.textContent='🔍 ANALIZANDO...'; btn.disabled=true;
+  info.style.color='var(--text2)'; info.textContent='La IA está revisando señales de crisis...';
+  try {
+    const r=await api('/api/alertas-crisis/evaluar',{ method:'POST' });
+    if(r.generada){ info.style.color='var(--red)'; info.textContent='⚠ Nueva alerta generada: '+r.alerta.titulo; }
+    else if(r.motivo==='sin_senales'){ info.style.color='var(--green2)'; info.textContent='✓ Sin señales de crisis por ahora. Todo tranquilo.'; }
+    else { info.style.color='var(--text3)'; info.textContent='Ya se evaluó recientemente, esperando antes de volver a revisar.'; }
+    await cargarCrisis();
+    actualizarBadgeAlertas();
+  } catch(e){ info.style.color='var(--red)'; info.textContent='⚠ '+e.message; }
+  finally { btn.textContent='🔍 EVALUAR AHORA'; btn.disabled=false; }
+}
+async function marcarCrisisLeida(id){
+  try { await api('/api/alertas-crisis/'+id,{ method:'PATCH' }); await cargarCrisis(); actualizarBadgeAlertas(); }
+  catch(e){ console.error(e.message); }
+}
+// ── AMBIENTE EN MEDIOS (automático, de RSS clasificado por IA) ──
+async function cargarAmbienteMedios(){
+  const l=document.getElementById('ambienteMediosList');if(!l)return;
+  try {
+    const medios=await api('/api/medios-ambiente');
+    if(!medios||medios.length===0){ l.innerHTML='<div style="text-align:center;padding:18px;font-family:var(--mono);font-size:11px;color:var(--text3)">Aún no hay suficientes notas de medios clasificadas. Ve a 🔔 Alertas → "Actualizar ahora".</div>'; return; }
+    const col={favor:'var(--green2)',contra:'var(--red)',neutral:'var(--text3)'};
+    const lbl={favor:'TE FAVORECE',contra:'TE CRITICA',neutral:'NEUTRAL'};
+    l.innerHTML=medios.map(m=>{
+      const ultima=m.ultima?new Date(m.ultima).toLocaleDateString('es-GT',{day:'2-digit',month:'short'}):'';
+      return `<div style="background:rgba(0,0,0,0.25);border:1px solid var(--border);border-left:3px solid ${col[m.postura]};padding:11px 13px;margin-bottom:7px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:7px;flex-wrap:wrap">
+          <div style="font-size:14px;color:var(--text);font-weight:600;flex:1">${(m.medio||'').replace(/</g,'&lt;')}</div>
+          <span style="font-family:var(--mono);font-size:8px;color:${col[m.postura]};border:1px solid ${col[m.postura]};padding:2px 7px">${lbl[m.postura]}</span>
+          <span style="font-family:var(--mono);font-size:8px;color:var(--text3)">${m.total} notas · última ${ultima}</span>
+        </div>
+        <div style="height:8px;background:rgba(0,0,0,0.4);border-radius:4px;overflow:hidden;display:flex">
+          <div style="width:${m.pctFavor}%;background:#00cc70"></div><div style="width:${m.pctContra}%;background:#ff3060"></div><div style="flex:1;background:#3d6080"></div>
+        </div>
+        <div style="display:flex;gap:12px;margin-top:5px;font-family:var(--mono);font-size:8px;color:var(--text3)">
+          <span style="color:var(--green2)">●${m.pctFavor}% favor</span><span style="color:var(--red)">●${m.pctContra}% contra</span>
+        </div>
+      </div>`;
+    }).join('');
+  } catch(e){ console.error('Ambiente medios:', e.message); }
 }
 // Llena el listón de noticias (ticker) con las menciones reales
 async function actualizarTicker(){
