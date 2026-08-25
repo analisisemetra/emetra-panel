@@ -705,85 +705,6 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;
 </div>
 
 <!-- ASISTENTE -->
-<div class="page-wrap" id="pw-asistente">
-  <div class="sh"><div class="st">Asistente IA — Analista estratégico</div><div class="sl"></div><div class="stag">CLAUDE + GPT HÍBRIDO</div></div>
-  <div class="guide"><div class="guide-ic">🤖</div><div class="guide-tx">Un <b>asistente al que le puedes preguntar en lenguaje normal</b> sobre todo lo que hay en la plataforma: "¿cuál es la zona más crítica?", "¿qué debo publicar?", "¿hay ataques coordinados?". Usa los botones rápidos o escribe tu propia pregunta.</div></div>
-  <div class="chat-wrap">
-    <div class="chat-head"><div class="d" style="width:6px;height:6px;border-radius:50%;background:var(--green);animation:blink 1.5s infinite"></div>&nbsp;EMETRA VOZ CIUDADANA — IA · acceso a 437 posts y 2,345 comentarios</div>
-    <div class="chat-msgs" id="chatMsgs">
-      <div class="cmsg a"><div class="mh">◈ EMETRA IA — ANALISTA</div>Hola. Tengo acceso al análisis completo: sentimiento, zonas críticas, denuncias, credibilidad y decisiones de contenido. Puedo responder preguntas o generar reportes. ¿En qué te ayudo?</div>
-    </div>
-    <div class="chat-qa">
-      <button class="qab" onclick="sendQ('¿Cuál es la zona más crítica y por qué?')">Zona más crítica</button>
-      <button class="qab" onclick="sendQ('¿Qué tema debo dejar de publicar?')">Qué reducir</button>
-      <button class="qab" onclick="sendQ('Resume las denuncias más urgentes')">Denuncias urgentes</button>
-      <button class="qab" onclick="sendQ('¿Cómo subir el índice de credibilidad?')">Subir credibilidad</button>
-      <button class="qab" onclick="sendQ('¿Hay algún ataque coordinado?')">Detectar ataques</button>
-      <button class="qab" onclick="sendQ('Genera un reporte ejecutivo')">Generar reporte</button>
-    </div>
-    <div class="chat-input-row">
-      <input class="chat-inp" id="chatInp" placeholder="Pregunta sobre los datos… ej: ¿qué provocó el pico negativo?" onkeydown="if(event.key==='Enter')sendChat()">
-      <button class="chat-snd" onclick="sendChat()">ENVIAR →</button>
-    </div>
-  </div>
-</div>
-
-<!-- REPORTE -->
-<div class="page-wrap" id="pw-reporte">
-  <div class="rbtns">
-    <button class="pbtn" onclick="window.print()">🖨 IMPRIMIR / PDF</button>
-    <button class="dbtn" onclick="dlRep()">↓ DESCARGAR HTML</button>
-  </div>
-  <div class="rep-header">
-    <div class="rep-title">EMETRA — REPORTE INTELIGENCIA CIUDADANA</div>
-    <div class="rep-sub">SENTINELA · VOZ CIUDADANA · MÓDULO EJECUTIVO</div>
-    <div class="rep-meta">
-      <div class="rmi">PERÍODO: <span>18 MAY — 04 JUN 2026</span></div>
-      <div class="rmi">POSTS: <span>437</span></div>
-      <div class="rmi">COMENTARIOS: <span>2,345</span></div>
-      <div class="rmi">CREDIBILIDAD PMT: <span>68/100</span></div>
-      <div class="rmi">GENERADO: <span id="repDate">—</span></div>
-    </div>
-  </div>
-  <div class="rsec"><div class="rsti">01 · RESUMEN EJECUTIVO</div><div style="font-size:12px;color:var(--text2);line-height:1.7;">Conversación dominada por <strong style="color:var(--text)">Operativos / Multas (143 posts)</strong> y <strong style="color:var(--text)">Tráfico</strong>. Sentimiento 80% neutral, 12% negativo (operativos), 8% positivo (auxilio vial). Crisis de volumen: 613 menciones/día (umbral 363). Índice de credibilidad PMT: 68/100 — debilidad principal en respuesta a denuncias (48%). TikTok líder en alcance: 2.2M plays, outlier de 715,800 (131× mediana).</div></div>
-  <div class="rsec"><div class="rsti">02 · ÍNDICE DE CREDIBILIDAD</div>
-    <div class="rrow"><div class="rrn" style="color:var(--green2)">74</div><div><div class="rrt"><strong style="color:var(--green2)">Amílcar Montejo — 74/100</strong> · Mayor credibilidad. Fortaleza: consistencia narrativa (85%). Debilidad: engagement auténtico en IG (42%).</div></div></div>
-    <div class="rrow"><div class="rrn" style="color:var(--amber)">68</div><div><div class="rrt"><strong style="color:var(--amber)">Policía MT — 68/100</strong> · Estable. Debilidad crítica: respuesta a denuncias (48%). Cerrar el ciclo subiría +12 pts.</div></div></div>
-    <div class="rrow"><div class="rrn" style="color:var(--amber)">61</div><div><div class="rrt"><strong style="color:var(--amber)">EMETRA Institucional — 61/100</strong> · El más bajo. Respuesta a denuncias (45%) y balance de sentimiento (58%) lo arrastran.</div></div></div>
-  </div>
-  <div class="rsec"><div class="rsti">03 · ZONAS CRÍTICAS</div>
-    <div class="rrow"><div class="rrn" style="color:var(--red)">Z11</div><div><div class="rrt"><strong style="color:var(--red)">ZONA 11 (47)</strong> · Roosevelt, Las Charcas, Hosp. Roosevelt. Congestión crónica.</div></div></div>
-    <div class="rrow"><div class="rrn" style="color:var(--red)">Z07</div><div><div class="rrt"><strong style="color:var(--red)">ZONA 7 (41)</strong> · Kaminal Juyú, El Trébol. Motos en banqueta + retenes hora pico.</div></div></div>
-    <div class="rrow"><div class="rrn" style="color:var(--red)">Z17</div><div><div class="rrt"><strong style="color:var(--red)">ZONA 17 (38)</strong> · Viaducto Lomas del Norte. Obras + averías = congestión diaria 2h+.</div></div></div>
-  </div>
-  <div class="rsec"><div class="rsti">04 · DENUNCIAS CON DIRECCIÓN EXACTA</div>
-    <div class="rrow"><div class="rrn">01</div><div><div class="rrt">"23 avenida zona 6 colonia Los Ángeles [...] motos en banquetas [...] se ha reportado a la alcaldía y no hacen NADA." — @hectorc92<span class="rbadge r">URGENTE</span></div><div class="rra">📍 23 Av., Zona 6 — Mercado San Martín</div></div></div>
-    <div class="rrow"><div class="rrn">02</div><div><div class="rrt">"En el trébol [...] los piratas y los buses se quedan parados [...] no hacen nada!!" — @gomjohn2<span class="rbadge r">DIARIA</span></div><div class="rra">📍 El Trébol — Zona 7/8, hora pico</div></div></div>
-    <div class="rrow"><div class="rrn">03</div><div><div class="rrt">"Van hacer lo mismo en la zona 1 con los vehículos oficiales [...]?" — @jhonn.1829<span class="rbadge a">DOBLE ESTÁNDAR</span></div><div class="rra">📍 Zona 1 — vehículos oficiales</div></div></div>
-  </div>
-  <div class="rsec"><div class="rsti">05 · PRÓXIMAS PUBLICACIONES</div>
-    <div class="rrow"><div class="rrn">P1</div><div><div class="rrt"><strong style="color:var(--green2)">Serie Transporte Público TikTok</strong> — proyección 2M+ plays.</div></div></div>
-    <div class="rrow"><div class="rrn">P2</div><div><div class="rrt"><strong style="color:var(--green2)">Datos de siniestralidad</strong> antes del operativo — sube credibilidad.</div></div></div>
-    <div class="rrow"><div class="rrn">P3</div><div><div class="rrt"><strong style="color:var(--green2)">Respuesta a Zona 6 y El Trébol</strong> — cierra ciclo ciudadano (+12 pts credibilidad).</div></div></div>
-    <div class="rrow"><div class="rrn">P4</div><div><div class="rrt"><strong style="color:var(--amber)">Caso sanción a vehículo oficial</strong> — contrarresta doble estándar.</div></div></div>
-  </div>
-</div>
-
-<!-- SOLUCIONES / RECOMENDACIONES -->
-<div class="page-wrap" id="pw-soluciones">
-  <div class="sh"><div class="st">💡 Soluciones — qué hacer en cada frente</div><div class="sl"></div><div class="stag">PLAN DE ACCIÓN IA</div></div>
-  <div class="guide"><div class="guide-ic">💡</div><div class="guide-tx">La <b>lista de tareas recomendadas</b> para resolver los problemas detectados en toda la plataforma, ordenadas por urgencia. Cada tarjeta dice de dónde viene el problema, qué hacer y qué se gana al resolverlo. Empieza por las rojas.</div></div>
-  <div class="ibox">◈ Para cada problema detectado en la plataforma, la IA propone una acción concreta, su prioridad y el impacto esperado. Resuelve de arriba hacia abajo: lo crítico primero.</div>
-
-  <div class="g3">
-    <div class="met"><div class="ml">Acciones críticas</div><div class="mv r">4</div><div class="ms">resolver ya</div><div class="mc"></div></div>
-    <div class="met"><div class="ml">Mejoras medias</div><div class="mv a">5</div><div class="ms">esta semana</div><div class="mc"></div></div>
-    <div class="met"><div class="ml">Oportunidades</div><div class="mv g">3</div><div class="ms">aprovechar</div><div class="mc"></div></div>
-  </div>
-
-  <div id="solList"></div>
-</div>
-
 <!-- PROYECTOS -->
 <div class="page-wrap" id="pw-proyectos">
   <div class="sh"><div class="st">🏗 Proyectos — evolución y aceptación ciudadana</div><div class="sl"></div><div class="stag">SEGUIMIENTO MENSUAL</div></div>
@@ -2212,37 +2133,6 @@ function renderRecomendaciones(){
 
 // ── (las amenazas ahora se cargan con datos reales arriba en cargarAmenazas) ──
 
-// ── SOLUTIONS / RECOMMENDATIONS ──
-const SOLUTIONS=[
-  {pri:'critica',src:'Amenazas',problem:'Ataque coordinado de 5 cuentas',action:'<b>Bloquear o silenciar el clúster</b> que ataca posts de operativos con 87% de sincronía. Documentar el patrón (capturas, horarios) antes de actuar por si se necesita respaldo. NO bloquear a críticos legítimos como @fernando_saminez.',impact:'Reduce ruido artificial en operativos'},
-  {pri:'critica',src:'Zonas · Denuncias',problem:'Denuncias sin respuesta — Zona 6 y El Trébol',action:'<b>Publicar una acción concreta</b> en las 2 ubicaciones más denunciadas: operativo en la 23 Av. Zona 6 (motos en banqueta) y en El Trébol Z-7 (piratas hora pico). Etiquetar a quienes denunciaron para cerrar el ciclo.',impact:'+12 pts credibilidad PMT'},
-  {pri:'critica',src:'Decisiones · Estadísticas',problem:'Operativos: 163 comentarios negativos',action:'<b>Cambiar la narrativa:</b> publicar datos de siniestralidad ("X accidentes menos en zonas con operativos") ANTES de mostrar el resultado de la multa. Comunicar el porqué, no solo el qué.',impact:'Convierte rechazo en comprensión'},
-  {pri:'critica',src:'Credibilidad',problem:'EMETRA institucional: credibilidad 61/100',action:'<b>Atacar el factor más débil:</b> respuesta a denuncias (45%). Crear un protocolo de respuesta en 24h a denuncias con dirección exacta. Asignar un community manager dedicado a cerrar ciclos.',impact:'Sube el índice general'},
-  {pri:'media',src:'Panorama · Estadísticas',problem:'Sentimiento negativo creciendo 12 semanas',action:'<b>Frenar la tendencia:</b> la línea negativa de EMETRA pasó de 10% a 72% en 12 semanas. Intensificar contenido positivo (auxilio vial, transporte) en las semanas siguientes para equilibrar el feed.',impact:'Estabiliza el balance'},
-  {pri:'media',src:'Decisiones',problem:'Infraestructura: 51 negativos vs 30 positivos',action:'<b>Mostrar resultados terminados:</b> dejar de comunicar obras en proceso. Publicar comparativas antes/después con tiempo de recorrido y fotos del resultado final.',impact:'Mejora recepción de obras'},
-  {pri:'media',src:'Credibilidad · Estadísticas',problem:'ER Instagram Montejo: 0.01% con 263k followers',action:'<b>Migrar inversión a TikTok</b> (ER 2.05%). Auditar la base de followers de IG. No comprar seguidores. Concentrar el contenido de vocería donde sí hay engagement real.',impact:'Engagement auténtico'},
-  {pri:'media',src:'Amenazas',problem:'Cuenta nueva sospechosa @cuenta_nueva_88',action:'<b>Vigilar sin bloquear:</b> cuenta reciente, sin perfil, solo negativa, en el borde del clúster (76%). Monitorear si suma sincronía. Si escala, mover a bloqueo.',impact:'Prevención temprana'},
-  {pri:'media',src:'Comentaristas',problem:'Crítico legítimo con narrativa viral potencial',action:'<b>Responder con transparencia</b> a @fernando_saminez: su tema de "doble estándar" es coherente y podría ganar tracción. Publicar un caso de sanción a vehículo oficial neutraliza el argumento.',impact:'Evita escalada de narrativa'},
-  {pri:'oportunidad',src:'Decisiones · Estadísticas',problem:'Transporte público subexplotado',action:'<b>Crear serie semanal en TikTok:</b> 6 posts generaron 718k plays (el más viral de la muestra). Hay demanda enorme y casi no se publica. Reels sobre Transmetro, buses, soluciones de movilidad.',impact:'Proyección 2M+ plays'},
-  {pri:'oportunidad',src:'Amenazas · Comentaristas',problem:'Embajadores ciudadanos sin aprovechar',action:'<b>Destacar a @ronyherrera37 y @coraliayadira:</b> defensores auténticos con lenguaje propio. Responderles, repostear sus comentarios, darles reconocimiento. Voz genuina frente al ruido coordinado.',impact:'Amplifica apoyo orgánico'},
-  {pri:'oportunidad',src:'Decisiones',problem:'Auxilio vial: único tema sin rechazo',action:'<b>Volverlo narrativa de marca:</b> publicar más historias de servicio (anciana en Roosevelt, motorista herido atendido). Genera el único 100% positivo sostenido. Más servicio, menos sanción.',impact:'Construye imagen positiva'},
-];
-function renderSolutions(){
-  const l=document.getElementById('solList');if(!l)return;
-  const labels={critica:'CRÍTICA',media:'MEDIA',oportunidad:'OPORTUNIDAD'};
-  l.innerHTML=SOLUTIONS.map(s=>`
-    <div class="sol-card ${s.pri}">
-      <div class="sol-head">
-        <span class="sol-pri ${s.pri}">${labels[s.pri]}</span>
-        <span class="sol-src">◈ ${s.src}</span>
-        <div class="sol-problem">${s.problem}</div>
-      </div>
-      <div class="sol-action">${s.action}</div>
-      <div class="sol-impact"><span class="sol-impact-lbl">Impacto esperado:</span><span class="sol-impact-val">${s.impact}</span></div>
-    </div>`).join('');
-}
-renderSolutions();
-
 // ── PROJECTS (desde el backend) ──
 const PROJ_MONTHS=['Ene','Feb','Mar','Abr','May','Jun'];
 let PROJECTS=[];
@@ -2987,52 +2877,6 @@ async function delActor(id){
   catch(e){ alert('Error: '+e.message); }
 }
 
-// ── AI CHAT ──
-const AI={
-  zona:()=>`La zona más crítica es la <b>Zona 11</b> con 47 menciones. Concentra Calzada Roosevelt, Las Charcas y el Hospital Roosevelt. El congestionamiento es crónico, aunque hubo un caso positivo: la doble fila frente al hospital fue atendida y se volvió viral (88% positivo). Le siguen Zona 7 (El Trébol) y Zona 17 (Viaducto Lomas del Norte), ambas con fricción diaria.`,
-  reducir:()=>`Debes <b>REDUCIR Institucional PMT</b>. 10 posts generaron apenas 1.5 interacciones por publicación en promedio — comunicados autorreferenciales y actos protocolarios que no mueven a nadie. Recomiendo reasignar ese esfuerzo de producción a <b>auxilio vial</b>, que es el único tema con cero rechazo.`,
-  denuncia:()=>`Las 3 denuncias más urgentes con dirección exacta:<br><br>1. <b>23 Av. Zona 6</b> (Col. Los Ángeles) — motos en banqueta, reportado a la alcaldía sin respuesta. RECURRENTE.<br>2. <b>El Trébol Z-7</b> — piratas y buses bloquean la hora pico diariamente.<br>3. <b>Zona 1</b> — vehículos oficiales en línea roja, percepción de doble estándar.`,
-  cred:()=>`Para subir el índice de credibilidad de PMT (actualmente 68/100):<br><br>① <b>Responder a denuncias</b> — es el factor más débil (48%). Publicar acción concreta en Zona 6 y El Trébol subiría +12 pts.<br>② <b>Datos de siniestralidad</b> antes de operativos — mejora el balance de sentimiento.<br>③ <b>Caso de sanción a vehículo oficial</b> — neutraliza la narrativa de doble estándar.`,
-  reporte:()=>`<b>REPORTE EJECUTIVO — ${new Date().toLocaleDateString('es-GT')}</b><br><br>• Conversación dominada por Operativos (143 posts) y Tráfico.<br>• Sentimiento: 80% neutral, 12% negativo, 8% positivo.<br>• Crisis de volumen: 613 menciones/día (umbral 363).<br>• Credibilidad PMT: 68/100, debilidad en respuesta a denuncias.<br>• Acción prioritaria: serie de Transporte Público (718k plays con solo 6 posts).<br><br>Puedes ver el reporte completo y exportarlo en la pestaña <b>Reporte</b>.`,
-  neg:()=>`El pico negativo se debe a los <b>operativos / multas</b>: 163 comentarios negativos vs 78 positivos. El análisis muestra que la gente <b>no rechaza los operativos en sí</b>, sino la falta de contexto. Las frases más repetidas son "hacen nada", "cuántos agentes corruptos" y "van a hacer lo mismo con los oficiales". La solución es comunicar el "porqué" con datos antes del resultado.`,
-  ataque:()=>`⚠ <b>Detecté un posible ataque coordinado.</b><br><br>5 cuentas (@valenzrobin, @Fc Bars, @Jhoel H. Rosales, @m.241265, @cuenta_nueva_88) comentaron en los mismos 3 posts de operativos en una ventana de <b>8 minutos</b>, con frases calcadas y el mismo error ortográfico. Indicadores: sincronía 87%, similitud de lenguaje 79%, mismo objetivo.<br><br><b>Recomendación:</b> bloquear/silenciar el clúster. Revisa la pestaña <b>🛡 Amenazas</b> para aplicar la acción. Importante: es señal heurística, la decisión final es tuya.`,
-  bloquear:()=>`Recomiendo <b>bloquear o silenciar</b> el clúster coordinado de 5 cuentas que ataca los posts de operativos de forma sincronizada. <br><br>En cambio, <b>NO</b> bloquees a @fernando_saminez: aunque es crítico, usa lenguaje propio y argumentos legítimos sobre transparencia — bloquearlo sería censura y daría munición. A ese conviene <b>vigilarlo</b>. Mira la pestaña 🛡 Amenazas para el detalle.`,
-  premiar:()=>`Dos <b>embajadores ciudadanos</b> que conviene destacar o premiar:<br><br>⭐ <b>@ronyherrera37</b> — defiende operativos en su colonia con argumentos propios, alta antigüedad, genera apoyo de terceros.<br>⭐ <b>@coraliayadira</b> — apoyo consistente con lenguaje variado.<br><br>Reconocerlos públicamente (responder, repostear) fortalece la voz ciudadana genuina frente al ruido coordinado.`,
-  def:()=>`Tengo acceso al análisis completo de 437 posts y 2,345 comentarios. Puedo ayudarte con: zonas críticas, denuncias ciudadanas con dirección, índice de credibilidad, decisiones de contenido, detección de <b>ataques coordinados</b>, recomendaciones de a quién <b>bloquear / premiar / vigilar / responder</b>, o generar un reporte ejecutivo. ¿Qué necesitas?`
-};
-function aiResp(q){
-  const l=q.toLowerCase();
-  if(l.includes('ataque')||l.includes('coordinad')||l.includes('clúster')||l.includes('cluster')||l.includes('bot')||l.includes('amenaza'))return AI.ataque();
-  if(l.includes('bloquear')||l.includes('silenciar'))return AI.bloquear();
-  if(l.includes('premiar')||l.includes('destacar')||l.includes('embajador'))return AI.premiar();
-  if(l.includes('zona')&&(l.includes('crític')||l.includes('critic')))return AI.zona();
-  if(l.includes('reducir')||l.includes('dejar de'))return AI.reducir();
-  if(l.includes('denuncia'))return AI.denuncia();
-  if(l.includes('credibilidad')||l.includes('subir'))return AI.cred();
-  if(l.includes('reporte')||l.includes('ejecutivo'))return AI.reporte();
-  if(l.includes('negativo')||l.includes('pico')||l.includes('provoc'))return AI.neg();
-  return AI.def();
-}
-function addMsg(c,t){
-  const m=document.getElementById('chatMsgs');if(!m)return;
-  const d=document.createElement('div');d.className='cmsg '+t;
-  if(t==='a')d.innerHTML=`<div class="mh">◈ EMETRA IA — ANALISTA</div>${c}`;
-  else d.textContent=c;
-  m.appendChild(d);m.scrollTop=m.scrollHeight;
-}
-function sendChat(){
-  const i=document.getElementById('chatInp');if(!i||!i.value.trim())return;
-  const q=i.value.trim();i.value='';addMsg(q,'u');
-  setTimeout(()=>addMsg(aiResp(q),'a'),700);
-}
-function sendQ(q){addMsg(q,'u');setTimeout(()=>addMsg(aiResp(q),'a'),700);}
-
-function dlRep(){
-  const blob=new Blob([document.documentElement.outerHTML],{type:'text/html'});
-  const url=URL.createObjectURL(blob);const a=document.createElement('a');
-  a.href=url;a.download='emetra-voz-ciudadana.html';
-  document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
-}
 </script>
 </body>
 </html>
