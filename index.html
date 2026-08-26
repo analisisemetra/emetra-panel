@@ -807,36 +807,45 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;
     </div>
   </div>
 
-  <!-- LISTA ÚNICA DE CUENTAS POR HOSTILIDAD (lo principal) -->
-  <div class="sh" style="margin-top:8px"><div class="st" style="color:var(--red)">Cuentas ordenadas por hostilidad</div><div class="sl"></div><div class="stag">NOMBRE · LINK · EVIDENCIA</div></div>
-  <div class="frow" style="margin-bottom:10px">
-    <button class="fbtn on" id="amf-todas" onclick="filtrarAmenazas('todas',this)">TODAS</button>
-    <button class="fbtn" id="amf-hostil" onclick="filtrarAmenazas('hostil',this)">HOSTILES</button>
-    <button class="fbtn" id="amf-neutral" onclick="filtrarAmenazas('neutral',this)">NEUTRALES</button>
-    <button class="fbtn" id="amf-aliado" onclick="filtrarAmenazas('aliado',this)">ALIADOS</button>
+  <!-- LISTA ÚNICA DE CUENTAS POR HOSTILIDAD (lo principal, pero colapsable) -->
+  <div class="sh" style="margin-top:8px;cursor:pointer" onclick="toggleAmCuentas()"><div class="st" style="color:var(--red)"><span id="amCuentasArrow">▸</span> Cuentas ordenadas por hostilidad</div><div class="sl"></div><div class="stag" id="amCuentasCount">0</div></div>
+  <div id="amCuentasWrap" style="display:none">
+    <div class="frow" style="margin-bottom:10px">
+      <button class="fbtn on" id="amf-todas" onclick="filtrarAmenazas('todas',this)">TODAS</button>
+      <button class="fbtn" id="amf-hostil" onclick="filtrarAmenazas('hostil',this)">HOSTILES</button>
+      <button class="fbtn" id="amf-neutral" onclick="filtrarAmenazas('neutral',this)">NEUTRALES</button>
+      <button class="fbtn" id="amf-aliado" onclick="filtrarAmenazas('aliado',this)">ALIADOS</button>
+    </div>
+    <div id="amenazasList"></div>
   </div>
-  <div id="amenazasList"></div>
 
-  <!-- OBJETIVO COMÚN: posts atacados -->
-  <div class="sh" style="margin-top:8px"><div class="st" style="color:var(--amber)">Posts más atacados por cuentas hostiles</div><div class="sl"></div></div>
-  <div id="objetivoList" style="margin-bottom:14px"></div>
-
-  <!-- RECOMENDACIONES DE ACCIÓN IA -->
-  <div class="sh" style="margin-top:8px"><div class="st" style="color:var(--cyan)">Recomendaciones de acción — IA</div><div class="sl"></div><div class="stag">DECISIÓN FINAL HUMANA</div></div>
-  <div id="threatRecs"></div>
+  <!-- OBJETIVO COMÚN: posts atacados (colapsable) -->
+  <div class="sh" style="margin-top:8px;cursor:pointer" onclick="toggleAmObjetivo()"><div class="st" style="color:var(--amber)"><span id="amObjetivoArrow">▸</span> Posts más atacados por cuentas hostiles</div><div class="sl"></div><div class="stag" id="amObjetivoCount">0</div></div>
+  <div id="amObjetivoWrap" style="display:none;margin-bottom:14px">
+    <div id="objetivoList"></div>
+  </div>
 </div>
 
 <!-- ALERTAS -->
 <div class="page-wrap" id="pw-alertas">
-  <div class="sh"><div class="st">🔔 Alertas — menciones en medios</div><div class="sl"></div><div class="stag">GOOGLE ALERTS · RSS</div></div>
+  <div class="sh"><div class="st">🔔 Alertas — menciones en medios</div><div class="sl"></div><div class="stag"><span class="live-dot"></span>GOOGLE ALERTS · RSS</div></div>
   <div class="guide"><div class="guide-ic">🔔</div><div class="guide-tx">Aquí aparecen las <b>menciones de tus entidades en noticias y medios</b>, detectadas automáticamente. El sistema revisa cada hora; también puedes actualizar manualmente.</div></div>
 
   <div class="frow" style="margin-bottom:14px">
     <button class="cfg-btn" onclick="refrescarAlertas()" id="btnRefrescar" style="max-width:220px">🔄 ACTUALIZAR AHORA</button>
-    <button class="fbtn" onclick="marcarLeidas()" style="margin-left:auto">✓ Marcar todas como leídas</button>
+    <button class="fbtn" onclick="marcarLeidas()">✓ Marcar todas como leídas</button>
+    <button class="fbtn" onclick="toggleCascadaNoticias()" id="btnToggleNoticias" style="margin-left:auto">▾ Ocultar noticias</button>
   </div>
   <div id="alertasInfo" style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-bottom:12px;min-height:14px"></div>
-  <div id="alertasList"></div>
+  <div id="cascadaNoticiasWrap"><div id="alertasList"></div></div>
+
+  <!-- SENTIMIENTO DE LAS NOTICIAS EN WEB (siempre visible, aunque escondas la cascada) -->
+  <div class="sh" style="margin-top:8px"><div class="st" style="color:var(--green2)">📊 Sentimiento de las noticias en web</div><div class="sl"></div><div class="stag">AUTOMÁTICO · IA</div></div>
+  <div class="ibox">◈ Una noticia <b>informativa que cita algo que publicaste en tus redes</b> (un operativo, un comunicado, hasta un accidente reportado por ustedes) <b>cuenta como buena</b> — significa que tu mensaje llegó al medio. Por eso la separamos de "positiva" (elogio directo) y de "neutral" (el medio lo reportó por su cuenta, sin citarte).</div>
+  <div class="pnl scan-sweep" style="margin-bottom:14px">
+    <div class="chart-box h180"><canvas id="chSentNoticias"></canvas></div>
+    <div id="sentNoticiasLeyenda" style="display:flex;gap:14px;flex-wrap:wrap;justify-content:center;margin-top:10px;font-family:var(--mono);font-size:9px;color:var(--text3)"></div>
+  </div>
 
   <!-- ALERTAS DE CRISIS — IA vigilando sola (sección aparte, debajo de las noticias) -->
   <div class="sh" style="margin-top:22px"><div class="st" style="color:var(--red)">⚠ Alertas de crisis — IA</div><div class="sl"></div><div class="stag" id="crisisTag">VIGILANCIA AUTOMÁTICA</div></div>
@@ -1296,7 +1305,7 @@ function goTab(n){
   if(n==='amenazas')setTimeout(cargarAmenazas,90);
   if(n==='zonas')setTimeout(cargarTerritorio,90);
   if(n==='actores')setTimeout(()=>{cargarActores();cargarAmbienteMedios();},90);
-  if(n==='alertas')setTimeout(()=>{cargarAlertas();marcarLeidas();cargarCrisis();},90);
+  if(n==='alertas')setTimeout(()=>{cargarAlertas();marcarLeidas();cargarCrisis();cargarSentimientoNoticias();},90);
   if(n==='config')setTimeout(()=>{cargarFuentes();cargarNoticias();llenarSelectEntidades();},90);
   if(n==='cargar')setTimeout(()=>{
     cargarDudosos();cargarHistorico();llenarSelectEntidades();
@@ -1449,8 +1458,8 @@ async function cargarPanorama(){
   try {
     const d = await api('/api/panorama');
     const set=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
-    set('pnPosts', d.totalPosts.toLocaleString());
-    set('pnComentarios', d.totalComentarios.toLocaleString());
+    const pnPostsEl=document.getElementById('pnPosts'); if(pnPostsEl) contarNumero(pnPostsEl, d.totalPosts, 700, 0);
+    const pnComEl=document.getElementById('pnComentarios'); if(pnComEl) contarNumero(pnComEl, d.totalComentarios, 700, 60);
     set('pnPlays', fmtNum(d.playsTotal));
     set('pnAlcance', fmtNum(d.alcanceTotal));
     set('pnNeg', d.sentimiento.negativo+'%');
@@ -1481,7 +1490,6 @@ async function cargarPanorama(){
         fc.innerHTML='<div style="font-family:var(--mono);font-size:11px;color:var(--text3);padding:20px">Sube comentarios para ver las frases recurrentes.</div>';
       }
     }
-    set('pnPosts', d.totalPosts.toLocaleString());
     const tb=document.querySelector('#tab-panorama .tbadge'); if(tb)tb.textContent=d.totalPosts;
     // ALCANCE por plataforma (no posts)
     const plat=document.getElementById('platChart');
@@ -1609,10 +1617,6 @@ function renderResumen(r){
         <div style="font-family:var(--mono);font-size:10px;color:var(--green2);letter-spacing:1px;margin-bottom:6px">✓ LO POSITIVO</div>
         <ul style="margin:0;padding-left:16px;font-size:12px">${lista(r.positivo)}</ul>
       </div>
-    </div>
-    <div style="margin-top:14px">
-      <div style="font-family:var(--mono);font-size:10px;color:var(--cyan);letter-spacing:1px;margin-bottom:6px">▸ RECOMENDACIONES PARA ESTA SEMANA</div>
-      <ol style="margin:0;padding-left:18px;font-size:12px">${lista(r.recomendaciones)}</ol>
     </div>`;
 }
 
@@ -1712,12 +1716,16 @@ async function cargarTerritorio(){
       if(zonas.length===0){ grid.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:20px;font-family:var(--mono);font-size:11px;color:var(--text3)">No hay zonas detectadas todavía. Sube comentarios y el sistema las detecta solo.</div>'; }
       else {
         const max=Math.max(...zonas.map(z=>z.menciones),1);
-        grid.innerHTML=zonas.map(z=>{
+        grid.innerHTML=zonas.map((z,i)=>{
           const pct=Math.round(z.menciones/max*100);
           const nivel = pct>=75?'hot':pct>=45?'warm':'cool';
           const lbl = pct>=75?'CRÍTICA':pct>=45?'ALTA':'MEDIA';
-          return `<div class="zcard ${nivel}" style="cursor:pointer" onclick="verDenunciasZona('${z.zona.replace(/'/g,'')}')"><div class="zn">${z.zona}</div><div class="zv ${nivel}">${z.menciones}</div><div class="zlbl">${lbl}</div><div class="zbar"><div class="zfill ${nivel}" style="width:${pct}%"></div></div><div class="ztop">${z.nota||''} · ${z.negativos||0} quejas</div></div>`;
+          const delay=Math.min(i*0.04,0.35);
+          return `<div class="zcard ${nivel}" style="cursor:pointer;opacity:0;animation:fadeInUp .4s ease ${delay}s forwards" onclick="verDenunciasZona('${z.zona.replace(/'/g,'')}')"><div class="zn">${z.zona}</div><div class="zv ${nivel}">${z.menciones}</div><div class="zlbl">${lbl}</div><div class="zbar"><div class="zfill ${nivel}" data-w="${pct}" style="width:0%;transition:width .8s cubic-bezier(.16,1,.3,1) ${delay+0.1}s"></div></div><div class="ztop">${z.nota||''} · ${z.negativos||0} quejas</div></div>`;
         }).join('');
+        requestAnimationFrame(()=>requestAnimationFrame(()=>{
+          document.querySelectorAll('#zonasGrid .zfill').forEach(el=>{ el.style.width=el.dataset.w+'%'; });
+        }));
       }
     }
   } catch(e){ console.error('Zonas:', e.message); }
@@ -2183,17 +2191,16 @@ async function cargarAmenazas(){
   try {
     AMENAZAS_DATA=await api('/api/amenazas');
     const r=AMENAZAS_DATA.resumen||{};
-    const set=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
-    set('amTotal',r.totalCuentas||0);
-    set('amAlta',r.altaHostilidad||0);
-    set('amHostiles',r.hostiles||0);
-    set('amAliados',r.aliados||0);
-    set('amSincronia',r.paresSincronia||0);
-    set('amLenguaje',r.paresLenguaje||0);
-    set('amObjetivo',(AMENAZAS_DATA.patrones.objetivo||[]).length);
+    const setNum=(id,v)=>{const el=document.getElementById(id);if(el)contarNumero(el,v||0,650,0);};
+    setNum('amTotal',r.totalCuentas);
+    setNum('amAlta',r.altaHostilidad);
+    setNum('amHostiles',r.hostiles);
+    setNum('amAliados',r.aliados);
+    setNum('amSincronia',r.paresSincronia);
+    setNum('amLenguaje',r.paresLenguaje);
+    setNum('amObjetivo',(AMENAZAS_DATA.patrones.objetivo||[]).length);
     renderAmenazas();
     renderObjetivo();
-    renderRecomendaciones();
     if(info){
       if((r.totalCuentas||0)===0){info.style.color='var(--text3)';info.textContent='No hay comentarios con identidad para analizar. Sube comentarios en 📥 Cargar datos.';}
       else{info.style.color='var(--green2)';info.textContent='✓ '+r.totalCuentas+' cuentas analizadas · '+(r.altaHostilidad||0)+' de hostilidad alta';}
@@ -2211,6 +2218,7 @@ function renderAmenazas(){
   const l=document.getElementById('amenazasList');if(!l)return;
   let lista=AMENAZAS_DATA.cuentas||[];
   if(amFiltro!=='todas') lista=lista.filter(c=>c.bando===amFiltro);
+  const cc=document.getElementById('amCuentasCount'); if(cc)cc.textContent=lista.length;
   if(lista.length===0){ l.innerHTML='<div style="text-align:center;padding:20px;font-family:var(--mono);font-size:11px;color:var(--text3)">Sin cuentas en este filtro. Dale "Analizar comentarios" o sube más datos.</div>'; return; }
   const colorNivel={ALTA:'var(--red)',SOSPECHOSA:'var(--amber)',BAJA:'var(--text3)'};
   const colorBando={hostil:'var(--red)',aliado:'var(--green2)',neutral:'var(--text3)'};
@@ -2219,7 +2227,8 @@ function renderAmenazas(){
     const col=colorNivel[c.nivel];
     const ev=c.evidencia||{};
     const enlace = c.enlace ? `<a href="${c.enlace}" target="_blank" rel="noopener" style="font-family:var(--mono);font-size:9px;color:var(--cyan);text-decoration:none">▸ ubicar</a>` : '';
-    return `<div style="background:rgba(0,0,0,0.3);border:1px solid var(--border);border-left:3px solid ${col};padding:11px 13px;margin-bottom:7px">
+    const delay=Math.min(i*0.025,0.4);
+    return `<div style="background:rgba(0,0,0,0.3);border:1px solid var(--border);border-left:3px solid ${col};padding:11px 13px;margin-bottom:7px;opacity:0;animation:fadeInUp .4s ease ${delay}s forwards">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
         <div style="font-family:var(--main);font-size:22px;font-weight:700;color:${col};min-width:40px;text-align:center">${c.puntaje}</div>
         <div style="flex:1;min-width:0">
@@ -2245,41 +2254,27 @@ function renderAmenazas(){
 function renderObjetivo(){
   const l=document.getElementById('objetivoList');if(!l)return;
   const obj=AMENAZAS_DATA.patrones.objetivo||[];
+  const oc=document.getElementById('amObjetivoCount'); if(oc)oc.textContent=obj.length;
   if(obj.length===0){ l.innerHTML='<div style="text-align:center;padding:14px;font-family:var(--mono);font-size:10px;color:var(--text3)">Aún no se detectan posts atacados en común.</div>'; return; }
-  l.innerHTML=obj.map((o,i)=>`<div style="display:flex;align-items:center;gap:10px;background:rgba(0,0,0,0.25);border:1px solid var(--border);padding:9px 12px;margin-bottom:6px">
+  l.innerHTML=obj.map((o,i)=>{const delay=Math.min(i*0.03,0.4);return `<div style="display:flex;align-items:center;gap:10px;background:rgba(0,0,0,0.25);border:1px solid var(--border);padding:9px 12px;margin-bottom:6px;opacity:0;animation:fadeInUp .4s ease ${delay}s forwards">
     <div style="font-family:var(--main);font-size:18px;font-weight:700;color:var(--amber);min-width:30px;text-align:center">${o.ataques}</div>
     <div style="flex:1;min-width:0"><div style="font-family:var(--mono);font-size:10px;color:var(--text2)">${o.cuentas} cuentas hostiles atacaron este post</div>
     <div style="font-family:var(--mono);font-size:8px;color:var(--text3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${o.post}</div></div>
     ${o.enlace?`<a href="${o.enlace}" target="_blank" rel="noopener" style="font-family:var(--mono);font-size:9px;color:var(--cyan);text-decoration:none">▸ ver</a>`:''}
-  </div>`).join('');
+  </div>`;}).join('');
 }
-function renderRecomendaciones(){
-  const l=document.getElementById('threatRecs');if(!l)return;
-  const cuentas=AMENAZAS_DATA.cuentas||[];
-  const recs=[];
-  // Hostiles de nivel ALTA → revisar/bloquear
-  cuentas.filter(c=>c.nivel==='ALTA'&&c.bando==='hostil').slice(0,3).forEach(c=>{
-    recs.push({act:'bloquear',icon:'🚫',target:`${c.autor||'(cuenta)'} · hostilidad ${c.puntaje}/100`,
-      why:`Cuenta con puntaje de hostilidad alto: ${c.negativos} comentarios negativos en ${c.posts} posts distintos${c.evidencia.sincronizaciones?`, sincronizada ${c.evidencia.sincronizaciones} veces con otras cuentas`:''}${c.evidencia.similitudMax>=60?`, lenguaje ${c.evidencia.similitudMax}% calcado con otra cuenta`:''}. Revisar antes de actuar — la decisión final es tuya.`,
-      sig:[`Puntaje ${c.puntaje}`,`${c.negativos} negativos`,`${c.posts} posts`,c.red||'']});
-  });
-  // Aliados → premiar
-  cuentas.filter(c=>c.bando==='aliado').slice(0,2).forEach(c=>{
-    recs.push({act:'premiar',icon:'⭐',target:`${c.autor||'(cuenta)'} · apoyo auténtico`,
-      why:`Cuenta con comentarios positivos auténticos (${c.comentarios} comentarios, mayoría positivos). Candidata a destacar o reconocer públicamente para fortalecer la base de apoyo genuino.`,
-      sig:['Apoyo real',`${c.comentarios} comentarios`,c.red||'']});
-  });
-  if(recs.length===0){ l.innerHTML='<div style="text-align:center;padding:20px;font-family:var(--mono);font-size:11px;color:var(--text3)">Aún no hay recomendaciones. Analiza comentarios primero.</div>'; return; }
-  const labels={bloquear:'REVISAR / BLOQUEAR',premiar:'PREMIAR / DESTACAR',vigilar:'VIGILAR',responder:'RESPONDER OFICIAL'};
-  l.innerHTML=recs.map((t,i)=>`<div class="threat-card ${t.act}">
-    <div class="threat-icon">${t.icon}</div>
-    <div class="threat-body">
-      <span class="threat-action ${t.act}">${labels[t.act]}</span>
-      <div class="threat-target">${t.target.replace(/</g,'&lt;')}</div>
-      <div class="threat-why">${t.why.replace(/</g,'&lt;')}</div>
-      <div class="threat-sig">${t.sig.filter(Boolean).map(s=>`<span>${s}</span>`).join('')}</div>
-    </div>
-  </div>`).join('');
+// Bloques colapsables (cerrados por defecto) para que Amenazas no obligue a scrollear todo
+function toggleAmCuentas(){
+  const w=document.getElementById('amCuentasWrap'), a=document.getElementById('amCuentasArrow');
+  const abrir=w.style.display==='none';
+  w.style.display=abrir?'block':'none';
+  if(a)a.textContent=abrir?'▾':'▸';
+}
+function toggleAmObjetivo(){
+  const w=document.getElementById('amObjetivoWrap'), a=document.getElementById('amObjetivoArrow');
+  const abrir=w.style.display==='none';
+  w.style.display=abrir?'block':'none';
+  if(a)a.textContent=abrir?'▾':'▸';
 }
 
 // ── (las amenazas ahora se cargan con datos reales arriba en cargarAmenazas) ──
@@ -2771,16 +2766,28 @@ async function cargarMasAlertas(){
     renderAlertas();
   } catch(e){ console.error('Cargar más alertas:', e.message); if(btn){ btn.textContent='⚠ Error, reintenta'; btn.disabled=false; } }
 }
+// Etiquetas y colores de la clasificación de medios — "informativo" tiene su propio color
+// para que quede clarísimo que NO es lo mismo que elogio directo, pero SÍ cuenta como bueno.
+const MEDIO_POSTURA={
+  favor:{lbl:'✓ COBERTURA POSITIVA',col:'var(--green2)'},
+  informativo_propio:{lbl:'📢 INFORMATIVO (TUS REDES)',col:'var(--cyan)'},
+  contra:{lbl:'⚠ CRÍTICA',col:'var(--red)'},
+  neutral:{lbl:'NEUTRAL',col:'var(--text3)'},
+};
 function renderAlertas(){
   const l=document.getElementById('alertasList');if(!l)return;
   if(ALERTAS_DATA.length===0){ l.innerHTML='<div style="text-align:center;padding:24px;font-family:var(--mono);font-size:11px;color:var(--text3)">No hay menciones todavía. Agrega tus fuentes RSS en Configuración y dale "Actualizar ahora".</div>'; return; }
-  const filas=ALERTAS_DATA.map(m=>{
+  const filas=ALERTAS_DATA.map((m,i)=>{
     const fecha=m.publicado?new Date(m.publicado).toLocaleString('es-GT',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}):'';
     const nuevo=!m.leida?'<span style="background:rgba(255,48,96,0.2);color:var(--red);font-family:var(--mono);font-size:8px;padding:2px 6px;margin-right:6px">NUEVO</span>':'';
-    return `<div style="background:rgba(0,0,0,0.3);border:1px solid var(--border);border-left:3px solid ${m.leida?'var(--border2)':'var(--red)'};padding:13px;margin-bottom:8px">
-      <div style="display:flex;align-items:center;gap:6px;margin-bottom:5px">
+    const post=MEDIO_POSTURA[m.sentimiento_medio];
+    const badge=post?`<span style="font-family:var(--mono);font-size:8px;color:${post.col};border:1px solid ${post.col};padding:2px 7px;white-space:nowrap" title="${(m.motivo_medio||'').replace(/"/g,'')}">${post.lbl}</span>`:'';
+    const delay=Math.min(i*0.03,0.35);
+    return `<div style="background:rgba(0,0,0,0.3);border:1px solid var(--border);border-left:3px solid ${m.leida?'var(--border2)':'var(--red)'};padding:13px;margin-bottom:8px;opacity:0;animation:fadeInUp .4s ease ${delay}s forwards">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:5px;flex-wrap:wrap">
         ${nuevo}<span style="font-family:var(--mono);font-size:9px;color:var(--cyan)">${m.fuente_nombre||''}</span>
-        <span style="font-family:var(--mono);font-size:9px;color:var(--text3);margin-left:auto">${fecha}</span>
+        <span style="font-family:var(--mono);font-size:9px;color:var(--text3)">${fecha}</span>
+        <span style="margin-left:auto"></span>${badge}
       </div>
       <div style="font-size:14px;color:var(--text);font-weight:600;line-height:1.4;margin-bottom:6px">${(m.titulo||'').replace(/</g,'&lt;')}</div>
       <div style="font-size:11px;color:var(--text3);line-height:1.5;margin-bottom:8px">${(m.resumen||'').replace(/</g,'&lt;').slice(0,200)}${(m.resumen||'').length>200?'...':''}</div>
@@ -2792,6 +2799,40 @@ function renderAlertas(){
     : '';
   l.innerHTML = filas + masBtn;
 }
+// Esconde/muestra la cascada de noticias (la estadística de sentimiento sigue visible igual)
+function toggleCascadaNoticias(){
+  const w=document.getElementById('cascadaNoticiasWrap');
+  const btn=document.getElementById('btnToggleNoticias');
+  const abrir=w.style.display==='none';
+  w.style.display=abrir?'block':'none';
+  if(btn)btn.textContent=abrir?'▾ Ocultar noticias':'▸ Mostrar noticias';
+}
+// Sentimiento agregado de TODAS las noticias — favor / informativo (de tus redes) / contra / neutral
+async function cargarSentimientoNoticias(){
+  try {
+    const s=await api('/api/alertas-sentimiento');
+    const cv=document.getElementById('chSentNoticias');
+    const leyenda=document.getElementById('sentNoticiasLeyenda');
+    if(!s.total){
+      if(leyenda) leyenda.innerHTML='<div style="font-family:var(--mono);font-size:11px;color:var(--text3)">Aún no hay noticias clasificadas. Dale "Actualizar ahora" arriba.</div>';
+      return;
+    }
+    const datos=[s.favor,s.informativo,s.contra,s.neutral];
+    const colores=['#00cc70','#00b4ff','#ff3060','#5a7a99'];
+    if(cv){
+      dc('chSentNoticias');
+      charts['chSentNoticias']=new Chart(cv.getContext('2d'),{type:'doughnut',data:{labels:['Positiva','Informativo (tus redes)','Crítica','Neutral'],datasets:[{data:datos,backgroundColor:colores,borderWidth:0}]},options:{...co,plugins:{...co.plugins,legend:{display:false}}}});
+    }
+    if(leyenda){
+      const pct=(n)=>Math.round(n/s.total*100);
+      leyenda.innerHTML=`
+        <span style="color:#00cc70">● Positiva ${s.favor} (${pct(s.favor)}%)</span>
+        <span style="color:#00b4ff">● Informativo/tus redes ${s.informativo} (${pct(s.informativo)}%)</span>
+        <span style="color:#ff3060">● Crítica ${s.contra} (${pct(s.contra)}%)</span>
+        <span style="color:#5a7a99">● Neutral ${s.neutral} (${pct(s.neutral)}%)</span>`;
+    }
+  } catch(e){ console.error('Sentimiento noticias:', e.message); }
+}
 async function refrescarAlertas(){
   const btn=document.getElementById('btnRefrescar');
   const info=document.getElementById('alertasInfo');
@@ -2800,11 +2841,13 @@ async function refrescarAlertas(){
   try {
     const r=await api('/api/alertas/refrescar',{ method:'POST' });
     let msg=r.nuevas>0?('✓ '+r.nuevas+' menciones nuevas de '+r.fuentes+' fuentes'):('Sin menciones nuevas. ('+r.fuentes+' fuentes revisadas)');
+    if(r.clasificadas>0) msg+=' · '+r.clasificadas+' notas clasificadas';
     if(r.crisis) msg+=' · ⚠ nueva alerta de crisis generada';
     info.style.color=r.nuevas>0?'var(--green2)':'var(--text3)';
     info.textContent=msg;
     await cargarAlertas();
     await cargarCrisis();
+    await cargarSentimientoNoticias();
     actualizarBadgeAlertas();
     actualizarTicker();
   } catch(e){ info.style.color='var(--red)'; info.textContent='⚠ '+e.message; }
@@ -2841,8 +2884,7 @@ async function cargarCrisis(){
           ${!a.leida?`<button class="fbtn" style="margin-left:auto;padding:3px 10px" onclick="marcarCrisisLeida(${a.id})">✓ marcar leída</button>`:''}
         </div>
         <div style="font-size:14px;color:var(--text);font-weight:700;line-height:1.35;margin-bottom:6px">${(a.titulo||'').replace(/</g,'&lt;')}</div>
-        <div style="font-size:12px;color:var(--text2);line-height:1.5;margin-bottom:7px">${(a.explicacion||'').replace(/</g,'&lt;')}</div>
-        <div style="font-size:11px;color:var(--cyan);line-height:1.5"><b>▸ Recomendación:</b> ${(a.recomendacion||'').replace(/</g,'&lt;')}</div>
+        <div style="font-size:12px;color:var(--text2);line-height:1.5">${(a.explicacion||'').replace(/</g,'&lt;')}</div>
       </div>`;
     }).join('');
   } catch(e){ console.error('Crisis:', e.message); }
@@ -2874,19 +2916,20 @@ async function cargarAmbienteMedios(){
     if(!medios||medios.length===0){ l.innerHTML='<div style="text-align:center;padding:18px;font-family:var(--mono);font-size:11px;color:var(--text3)">Aún no hay suficientes notas de medios clasificadas. Ve a 🔔 Alertas → "Actualizar ahora".</div>'; return; }
     const col={favor:'var(--green2)',contra:'var(--red)',neutral:'var(--text3)'};
     const lbl={favor:'TE FAVORECE',contra:'TE CRITICA',neutral:'NEUTRAL'};
-    l.innerHTML=medios.map(m=>{
+    l.innerHTML=medios.map((m,i)=>{
       const ultima=m.ultima?new Date(m.ultima).toLocaleDateString('es-GT',{day:'2-digit',month:'short'}):'';
-      return `<div style="background:rgba(0,0,0,0.25);border:1px solid var(--border);border-left:3px solid ${col[m.postura]};padding:11px 13px;margin-bottom:7px">
+      const delay=Math.min(i*0.04,0.4);
+      return `<div style="background:rgba(0,0,0,0.25);border:1px solid var(--border);border-left:3px solid ${col[m.postura]};padding:11px 13px;margin-bottom:7px;opacity:0;animation:fadeInUp .4s ease ${delay}s forwards">
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:7px;flex-wrap:wrap">
           <div style="font-size:14px;color:var(--text);font-weight:600;flex:1">${(m.medio||'').replace(/</g,'&lt;')}</div>
           <span style="font-family:var(--mono);font-size:8px;color:${col[m.postura]};border:1px solid ${col[m.postura]};padding:2px 7px">${lbl[m.postura]}</span>
           <span style="font-family:var(--mono);font-size:8px;color:var(--text3)">${m.total} notas · última ${ultima}</span>
         </div>
         <div style="height:8px;background:rgba(0,0,0,0.4);border-radius:4px;overflow:hidden;display:flex">
-          <div style="width:${m.pctFavor}%;background:#00cc70"></div><div style="width:${m.pctContra}%;background:#ff3060"></div><div style="flex:1;background:#3d6080"></div>
+          <div style="width:${m.pctFavor}%;background:#00cc70" title="Positiva"></div><div style="width:${m.pctInformativo}%;background:#00b4ff" title="Informativo (tus redes)"></div><div style="width:${m.pctContra}%;background:#ff3060" title="Crítica"></div><div style="flex:1;background:#3d6080"></div>
         </div>
-        <div style="display:flex;gap:12px;margin-top:5px;font-family:var(--mono);font-size:8px;color:var(--text3)">
-          <span style="color:var(--green2)">●${m.pctFavor}% favor</span><span style="color:var(--red)">●${m.pctContra}% contra</span>
+        <div style="display:flex;gap:10px;margin-top:5px;font-family:var(--mono);font-size:8px;color:var(--text3);flex-wrap:wrap">
+          <span style="color:var(--green2)">●${m.pctFavor}% positiva</span><span style="color:var(--cyan)">●${m.pctInformativo}% informativo/tus redes</span><span style="color:var(--red)">●${m.pctContra}% crítica</span>
         </div>
       </div>`;
     }).join('');
